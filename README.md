@@ -1,0 +1,4 @@
+- coletar um catálogo de algoritmos/teoremas/estruturas de dados(100.000 teoremas), que são usados no dia a dia de um programador "médio"
+  - ordenação de relevancia(lista > grafo)
+  - formato padrão é Kind
+  - pensar mais "business" (método withdraw num banking system)
