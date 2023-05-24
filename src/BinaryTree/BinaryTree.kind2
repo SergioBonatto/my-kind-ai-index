@@ -1,0 +1,197 @@
+type BinaryTree (t) {
+  Leaf
+  Node (val: t) (lft: (BinaryTree t)) (rgt: (BinaryTree t))
+}
+
+BinaryTree.set <a> (key: Data.Bits) (val: a) (btree: BinaryTree a) : (BinaryTree (Data.Maybe a))
+BinaryTree.set a (Data.Bits.e) val (BinaryTree.Leaf) = BinaryTree.Node (Data.Maybe.some val) (BinaryTree.Leaf) (BinaryTree.Leaf)
+BinaryTree.set a (Data.Bits.o pred) val (BinaryTree.Leaf) = BinaryTree.Node (Data.Maybe.none) (BinaryTree.set pred val (BinaryTree.Leaf)) (BinaryTree.Leaf)
+BinaryTree.set a (Data.Bits.i pred) val (BinaryTree.Leaf) = BinaryTree.Node (Data.Maybe.none) (BinaryTree.Leaf) (BinaryTree.set pred val (BinaryTree.Leaf))
+BinaryTree.set a (Data.Bits.e) val (BinaryTree.Node value lft rgt) = (BinaryTree.map (x => Data.Maybe.some x) (BinaryTree.Node val lft rgt))
+BinaryTree.set a (Data.Bits.o pred) val (BinaryTree.Node value lft rgt) = BinaryTree.set.lft value (BinaryTree.set pred val lft) rgt
+BinaryTree.set a (Data.Bits.i pred) val (BinaryTree.Node value lft rgt) = BinaryTree.set.rgt value lft (BinaryTree.set pred val rgt)
+
+BinaryTree.set.lft <a> (val: a) (lft: (BinaryTree (Data.Maybe a))) (rgt: BinaryTree a) : (BinaryTree (Data.Maybe a))
+BinaryTree.set.lft a val lft rgt = (BinaryTree.Node (Data.Maybe.some val) lft (BinaryTree.map (x => Data.Maybe.some x) rgt))
+
+BinaryTree.set.rgt <a> (val: a) (lft: BinaryTree a) (rgt: (BinaryTree (Data.Maybe a))) : (BinaryTree (Data.Maybe a))
+BinaryTree.set.rgt a val lft rgt = (BinaryTree.Node (Data.Maybe.some val) (BinaryTree.map (x => Data.Maybe.some x) lft) rgt)
+
+BinaryTree.get <a: Type> (key: Data.Bits) (btree: BinaryTree a) : (Data.Maybe a)
+BinaryTree.get a (Data.Bits.e) (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.get a (Data.Bits.o pred) (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.get a (Data.Bits.i pred) (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.get a (Data.Bits.e) (BinaryTree.Node value lft rgt) = (Data.Maybe.some value)
+BinaryTree.get a (Data.Bits.o pred) (BinaryTree.Node value lft rgt) = (BinaryTree.get pred lft) 
+BinaryTree.get a (Data.Bits.i pred) (BinaryTree.Node value lft rgt) = (BinaryTree.get pred rgt)
+
+BinaryTree.mut <a: Type> (key: Data.Bits) (func: a -> a) (btree: BinaryTree a) : (BinaryTree a)
+BinaryTree.mut a (Data.Bits.e) func (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.mut a (Data.Bits.o pred) func (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.mut a (Data.Bits.i pred) func (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.mut a (Data.Bits.e) func (BinaryTree.Node value lft rgt) = BinaryTree.Node a (func value) lft rgt
+BinaryTree.mut a (Data.Bits.o pred) func (BinaryTree.Node value lft rgt) = BinaryTree.Node a value (BinaryTree.mut pred func lft) rgt
+BinaryTree.mut a (Data.Bits.i pred) func (BinaryTree.Node value lft rgt) = BinaryTree.Node a value lft (BinaryTree.mut pred func rgt)
+
+BinaryTree.app <a: Type> (key: Data.Bits) (func: a -> a) (init: a) (btree: BinaryTree a) : (BinaryTree a)
+BinaryTree.app a (Data.Bits.e) func init (BinaryTree.Leaf) = BinaryTree.Node a (func init) (BinaryTree.Leaf) (BinaryTree.Leaf)
+BinaryTree.app a (Data.Bits.o pred) func init (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.app a (Data.Bits.i pred) func init (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.app a (Data.Bits.e) func init (BinaryTree.Node value lft rgt) = BinaryTree.Node a (func value) lft rgt
+BinaryTree.app a (Data.Bits.o pred) func init (BinaryTree.Node value lft rgt) = BinaryTree.Node a value (BinaryTree.app pred func init lft) rgt
+BinaryTree.app a (Data.Bits.i pred) func init (BinaryTree.Node value lft rgt) = BinaryTree.Node a value lft (BinaryTree.app pred func init rgt)
+
+BinaryTree.del <a: Type> (key: Data.Bits) (btree: BinaryTree a) : (BinaryTree a)
+BinaryTree.del a (Data.Bits.e) (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.del a (Data.Bits.o pred) (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.del a (Data.Bits.i pred) (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.del a (Data.Bits.e) (BinaryTree.Node value lft rgt) = (BinaryTree.Leaf)
+BinaryTree.del a (Data.Bits.o pred) (BinaryTree.Node value lft rgt) = BinaryTree.Node a value (BinaryTree.del pred lft) rgt
+BinaryTree.del a (Data.Bits.i pred) (BinaryTree.Node value lft rgt) = BinaryTree.Node a value lft (BinaryTree.del pred rgt)
+
+BinaryTree.has <a: Type> (key: Data.Bits) (btree: BinaryTree a) : Data.Bool
+BinaryTree.has a (Data.Bits.e) (BinaryTree.Node value lft rgt) = Data.Bool.true
+BinaryTree.has a (Data.Bits.o pred) (BinaryTree.Node value lft rgt) = (BinaryTree.has pred lft) 
+BinaryTree.has a (Data.Bits.i pred) (BinaryTree.Node value lft rgt) = (BinaryTree.has pred rgt)
+BinaryTree.has a key                              (BinaryTree.Leaf) = Data.Bool.false
+
+BinaryTree.filter <a: Type> (cond: a -> Data.Bool) (btree: BinaryTree a) : (BinaryTree (Data.Maybe a))
+BinaryTree.filter cond BinaryTree.Leaf = BinaryTree.Leaf
+BinaryTree.filter cond (BinaryTree.Node value lft rgt) = 
+  Data.Bool.match (cond value) (x => _ ) (BinaryTree.Node (Data.Maybe.some value) (BinaryTree.filter cond lft) (BinaryTree.filter cond rgt)) (BinaryTree.Node Data.Maybe.none  (BinaryTree.filter cond lft) (BinaryTree.filter cond rgt))
+
+BinaryTree.map <a: Type> <b: Type> (func: a -> b) (btree: BinaryTree a) : (BinaryTree b)
+BinaryTree.map a b func BinaryTree.Leaf = BinaryTree.Leaf
+BinaryTree.map a b func (BinaryTree.Node t value lft rgt) = BinaryTree.Node (func value) (BinaryTree.map func lft) (BinaryTree.map func rgt)
+
+BinaryTree.key <a: Type> (btree: BinaryTree a) : (Data.List Data.Bits) 
+BinaryTree.key a btree = BinaryTree.key.go btree Data.Bits.e (Data.List.nil Data.Bits)
+
+BinaryTree.key.go <a: Type> (btree: BinaryTree a) (key: Data.Bits) (list: (Data.List Data.Bits)) : (Data.List Data.Bits) 
+BinaryTree.key.go a BinaryTree.Leaf key list = list
+BinaryTree.key.go a (BinaryTree.Node t value lft rgt) key list = BinaryTree.key.go rgt (Data.Bits.i key) (BinaryTree.key.go lft (Data.Bits.o key) (Data.List.cons key list))
+
+BinaryTree.union.left <a: Type> (bitsmapa: BinaryTree a) (bitsmapb: BinaryTree a) : (BinaryTree a) 
+BinaryTree.union.left a BinaryTree.Leaf bitsmapb = bitsmapb
+BinaryTree.union.left a bitsmapa BinaryTree.Leaf = bitsmapa
+BinaryTree.union.left a (BinaryTree.Node t value t.lft t.rgt) (BinaryTree.Node s s.value s.lft s.rgt) = BinaryTree.Node value (BinaryTree.union.left t.lft s.lft) (BinaryTree.union.left t.rgt s.rgt)
+
+BinaryTree.union.right <a: Type> (bitsmapa: BinaryTree a) (bitsmapb: BinaryTree a) : (BinaryTree a) 
+BinaryTree.union.right a BinaryTree.Leaf bitsmapb = bitsmapb
+BinaryTree.union.right a bitsmapa BinaryTree.Leaf = bitsmapa
+BinaryTree.union.right a (BinaryTree.Node t value t.lft t.rgt) (BinaryTree.Node s s.value s.lft s.rgt) = BinaryTree.Node s.value (BinaryTree.union.right t.lft s.lft) (BinaryTree.union.right t.rgt s.rgt)
+
+BinaryTree.length <a> (btree: BinaryTree a) : Data.Nat
+BinaryTree.length a BinaryTree.Leaf = 0n
+BinaryTree.length a (BinaryTree.Node val lft rgt) = Data.Nat.succ (Data.Nat.add (BinaryTree.length lft) (BinaryTree.length rgt))
+
+BinaryTree.update <a> (key: Data.Bits) (func: a -> a) (btree: BinaryTree a) : BinaryTree (Data.Maybe a)
+BinaryTree.update a (Data.Bits.e) func (BinaryTree.Leaf) = BinaryTree.Leaf
+BinaryTree.update a (Data.Bits.o pred) func (BinaryTree.Leaf) = BinaryTree.Node  (Data.Maybe.none) (BinaryTree.update pred func (BinaryTree.Leaf)) (BinaryTree.Leaf)
+BinaryTree.update a (Data.Bits.i pred) func (BinaryTree.Leaf) = BinaryTree.Node  (Data.Maybe.none) (BinaryTree.Leaf) (BinaryTree.update pred func (BinaryTree.Leaf))
+BinaryTree.update a (Data.Bits.e) func (BinaryTree.Node value lft rgt) = (BinaryTree.map (x => Data.Maybe.some x) (BinaryTree.Node (func value) lft rgt))
+BinaryTree.update a (Data.Bits.o pred) func (BinaryTree.Node value lft rgt) = BinaryTree.update.lft value (BinaryTree.update pred func lft) rgt
+BinaryTree.update a (Data.Bits.i pred) func (BinaryTree.Node value lft rgt) = BinaryTree.update.rgt value lft (BinaryTree.update pred func rgt)
+
+BinaryTree.update.lft <a> (val: a) (lft: (BinaryTree (Data.Maybe a))) (rgt: BinaryTree a) : (BinaryTree (Data.Maybe a))
+BinaryTree.update.lft a val lft rgt = (BinaryTree.Node (Data.Maybe.some val) lft (BinaryTree.map (x => Data.Maybe.some x) rgt))
+
+BinaryTree.update.rgt <a> (val: a) (lft: BinaryTree a) (rgt: (BinaryTree (Data.Maybe a))) : (BinaryTree (Data.Maybe a))
+BinaryTree.update.rgt a val lft rgt = (BinaryTree.Node (Data.Maybe.some val) (BinaryTree.map (x => Data.Maybe.some x) lft) rgt)
+
+BinaryTree.got <a> (key: Data.Bits) (btree: BinaryTree a) : Data.Pair (BinaryTree a) (Data.Maybe a)
+BinaryTree.got a (Data.Bits.e) (BinaryTree.Leaf) = Data.Pair.new BinaryTree.Leaf Data.Maybe.none
+BinaryTree.got a (Data.Bits.o pred) (BinaryTree.Leaf) = Data.Pair.new BinaryTree.Leaf Data.Maybe.none
+BinaryTree.got a (Data.Bits.i pred) (BinaryTree.Leaf) = Data.Pair.new BinaryTree.Leaf Data.Maybe.none
+BinaryTree.got a (Data.Bits.e) (BinaryTree.Node value lft rgt) = Data.Pair.new (BinaryTree.Node value lft rgt) (Data.Maybe.some value)
+BinaryTree.got a (Data.Bits.o pred) (BinaryTree.Node value lft rgt) = BinaryTree.got.lft value (BinaryTree.got pred lft) rgt
+BinaryTree.got a (Data.Bits.i pred) (BinaryTree.Node value lft rgt) = BinaryTree.got.rgt value lft (BinaryTree.got pred rgt)
+
+BinaryTree.got.lft <a> (val: a) (lft: Data.Pair (BinaryTree a) (Data.Maybe a)) (rgt: BinaryTree a) : Data.Pair (BinaryTree a) (Data.Maybe a)
+BinaryTree.got.lft val (Data.Pair.new lft res) rgt = Data.Pair.new (BinaryTree.Node val lft rgt) res
+
+BinaryTree.got.rgt <a> (val: a) (lft: BinaryTree a) (rgt: Data.Pair (BinaryTree a) (Data.Maybe a)) : Data.Pair (BinaryTree a) (Data.Maybe a)
+BinaryTree.got.rgt val lft (Data.Pair.new rgt res) = Data.Pair.new (BinaryTree.Node val lft rgt) res
+
+BinaryTree.sub.left <a> (btree: BinaryTree a) : BinaryTree a
+BinaryTree.sub.left a (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.sub.left a (BinaryTree.Node value lft rgt) = lft
+
+BinaryTree.sub.right <a> (btree: BinaryTree a) : BinaryTree a
+BinaryTree.sub.right a (BinaryTree.Leaf) = (BinaryTree.Leaf)
+BinaryTree.sub.right a (BinaryTree.Node value lft rgt) = rgt
+
+BinaryTree.to_list <a> (btree: BinaryTree a) : Data.List a
+BinaryTree.to_list a (BinaryTree.Leaf) = []
+BinaryTree.to_list a (BinaryTree.Node value lft rgt) = Data.List.cons value (Data.List.concat (BinaryTree.to_list lft) (BinaryTree.to_list rgt))
+
+Data.List.to_BinaryTree <a> (l: Data.List a) : BinaryTree a
+Data.List.to_BinaryTree a l = BinaryTree.to_BinaryTree.insert 0n l
+
+BinaryTree.to_BinaryTree.insert <a> (n: Data.Nat) (l: Data.List a) : BinaryTree a
+BinaryTree.to_BinaryTree.insert a n Data.List.nil  = BinaryTree.Leaf
+BinaryTree.to_BinaryTree.insert a n (Data.List.cons head tail) = BinaryTree.Node head (BinaryTree.to_BinaryTree.insert (Data.Nat.add (Data.Nat.mul 2n n) 1n) (Data.List.drop tail n)) (BinaryTree.to_BinaryTree.insert (Data.Nat.add (Data.Nat.mul 2n n) 2n) (Data.List.drop tail (Data.Nat.succ n)))
+
+BinaryTree.to_level <a> (n: Data.Nat) (btree: BinaryTree a) : Data.List a
+BinaryTree.to_level a n btree = BinaryTree.get_level n 0n btree
+
+BinaryTree.get_level <a> (n: Data.Nat) (m: Data.Nat) (btree: BinaryTree a) : Data.List a
+BinaryTree.get_level n m BinaryTree.Leaf = Data.List.nil
+BinaryTree.get_level Data.Nat.zero m (BinaryTree.Node value lft rgt) = [value]
+BinaryTree.get_level n m             (BinaryTree.Node value lft rgt) = 
+if (Data.Nat.equal n m) {
+  [value]
+} else {
+  Data.List.concat (BinaryTree.get_level n (Data.Nat.succ m) lft) (BinaryTree.get_level n (Data.Nat.succ m) rgt)
+}
+
+BinaryTree.getLevels <a> (btree: BinaryTree a) : Data.List (Data.List a)
+BinaryTree.getLevels a btree = BinaryTree.getLevels.aux ((BinaryTree.length btree)) btree
+
+BinaryTree.getLevels.aux <a> (n: Data.Nat) (btree: BinaryTree a) : Data.List (Data.List a)
+BinaryTree.getLevels.aux Data.Nat.zero btree = Data.List.nil
+BinaryTree.getLevels.aux (Data.Nat.succ n.pred) btree = Data.List.cons (BinaryTree.to_level n.pred btree) (BinaryTree.getLevels.aux n.pred btree)
+
+BinaryTree.getLevels.length <a> (btree: BinaryTree a) : Data.Nat
+BinaryTree.getLevels.length a btree = Data.List.length (BinaryTree.getLevels btree)
+
+BinaryTree.node.key <a> (btree: BinaryTree a) : (Data.Maybe a)
+BinaryTree.node.key a (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.node.key a (BinaryTree.Node value lft rgt) = (Data.Maybe.some value)
+
+// BinaryTree.bstInsert (btree: BinaryTree Data.U60) (z: Data.U60) : BinaryTree Data.U60
+// BinaryTree.bstInsert (BinaryTree.Leaf) z = BinaryTree.Node z (BinaryTree.Leaf) (BinaryTree.Leaf)
+// BinaryTree.bstInsert (BinaryTree.Node t value lft rgt) z = Data.U60.if (< z value) (BinaryTree.Node value (BinaryTree.bstInsert lft z) rgt) (BinaryTree.Node value  lft (BinaryTree.bstInsert rgt z))
+
+BinaryTree.bstMax  <a> (btree: BinaryTree a) : (Data.Maybe a)
+BinaryTree.bstMax a (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.bstMax a (BinaryTree.Node value (BinaryTree.Leaf) (BinaryTree.Leaf)) = (Data.Maybe.some value)
+BinaryTree.bstMax a (BinaryTree.Node value lft (BinaryTree.Leaf)) = (Data.Maybe.some value)
+BinaryTree.bstMax a (BinaryTree.Node value lft rgt) = BinaryTree.bstMax rgt
+
+BinaryTree.bstMin <a> (btree: BinaryTree a) : (Data.Maybe a)
+BinaryTree.bstMin a (BinaryTree.Leaf) = (Data.Maybe.none)
+BinaryTree.bstMin a (BinaryTree.Node value (BinaryTree.Leaf) (BinaryTree.Leaf)) = (Data.Maybe.some value)
+BinaryTree.bstMin a (BinaryTree.Node value (BinaryTree.Leaf) rgt) = (Data.Maybe.some value)
+BinaryTree.bstMin a (BinaryTree.Node value lft rgt) = BinaryTree.bstMin lft
+
+BinaryTree.bstFromList <a> (l: Data.List a) : BinaryTree a
+BinaryTree.bstFromList a Data.List.nil = (BinaryTree.Leaf)
+BinaryTree.bstFromList a lst = Data.List.foldl (BinaryTree.Leaf) (tree => elem => BinaryTree.bstInsert elem tree) lst
+
+#partial
+BinaryTree.nkey <a> (btree: BinaryTree a) : a
+BinaryTree.nkey a (BinaryTree.Node value lft rgt) = value
+
+// Binary.isBST (btree: BinaryTree Data.U60) : Data.U60
+// Binary.isBST (BinaryTree.Leaf) = 1
+// Binary.isBST (BinaryTree.Node value (BinaryTree.Leaf) (BinaryTree.Leaf)) = 1
+// Binary.isBST (BinaryTree.Node value (BinaryTree.Leaf) rgt) = (& (< value (BinaryTree.nkey rgt)) (Binary.isBST rgt))
+// Binary.isBST (BinaryTree.Node value lft (BinaryTree.Leaf)) = (& (>= value (BinaryTree.nkey lft)) (Binary.isBST lft))  
+// Binary.isBST (BinaryTree.Node value lft rgt) = (& (& (>= value (BinaryTree.nkey lft)) (< value (BinaryTree.nkey rgt))) (& (Binary.isBST lft)  (Binary.isBST rgt)))  
+  
+Main {
+  // BinaryTree.key (BinaryTree.set (Data.Nat.to_bits 10n) 1 BinaryTree.Leaf)
+  Binary.isBST (BinaryTree.bstFromList [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+}
+
