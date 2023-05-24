@@ -1,0 +1,30 @@
+Data.List.merge_sort <a> (cmp : a -> a -> Data.Bool) (xs : Data.List a) : Data.List a {
+  Data.List.merge_sort.unpack cmp (Data.List.map xs (x => Data.List.pure x))
+}
+
+
+Data.List.merge_sort.unpack <a> (cmp: a -> a -> Data.Bool) (xs: Data.List (Data.List a)) : Data.List a
+Data.List.merge_sort.unpack a cmp (Data.List.nil  xa)                   = Data.List.nil
+Data.List.merge_sort.unpack a cmp (Data.List.cons xa xh (Data.List.nil xa_)) = xh
+Data.List.merge_sort.unpack a cmp xs                               = Data.List.merge_sort.unpack cmp (Data.List.merge_sort.merge_pair cmp xs)
+
+Data.List.merge_sort.merge_pair <a> (cmp: a -> a -> Data.Bool) (xs: Data.List (Data.List a)) : Data.List (Data.List a)
+Data.List.merge_sort.merge_pair a cmp (Data.List.cons xa1 xh1 (Data.List.cons xa2 xh2 xt2)) =
+  (Data.List.cons
+    (Data.List.merge_sort.merge      cmp xh1 xh2)
+    (Data.List.merge_sort.merge_pair cmp xt2    )
+  )
+
+Data.List.merge_sort.merge_pair a cmp xs = xs
+
+Data.List.merge_sort.merge <a> (cmp: a -> a -> Data.Bool) (xs: Data.List a) (ys: Data.List a) : Data.List a
+Data.List.merge_sort.merge a cmp (Data.List.nil  xa)       ys                   = ys
+Data.List.merge_sort.merge a cmp xs                   (Data.List.nil  ya)       = xs
+Data.List.merge_sort.merge a cmp (Data.List.cons xa xh xt) (Data.List.cons ya yh yt) =
+  if (cmp xh yh) {
+    let ys = (Data.List.cons ya yh yt)
+    Data.List.cons xh (Data.List.merge_sort.merge cmp xt ys)
+  } else {
+    let xs = (Data.List.cons xa xh xt)
+    Data.List.cons yh (Data.List.merge_sort.merge cmp xs yt)
+  }

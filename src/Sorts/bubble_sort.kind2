@@ -1,0 +1,12 @@
+Bubble.sort <a> (cmp: a -> a -> Data.Bool) (xs: Data.List a) : Data.List a
+Bubble.sort a cmp Data.List.nil         = Data.List.nil
+Bubble.sort a cmp (Data.List.cons t x xs) = (Insert cmp x (Bubble.sort cmp xs))
+
+Insert <a> (cmp: a -> a -> Data.Bool) (v: a) (xs: Data.List a)  :  Data.List a
+Insert a cmp v Data.List.nil            = (Data.List.cons v Data.List.nil)
+Insert a cmp v (Data.List.cons t x xs)  = (GoDown cmp (cmp v x) v x xs)
+
+#partial
+GoDown <a> (cmp: a -> a -> Data.Bool) (b: Data.Bool) (v: a) (x: a) (xs: Data.List a) : Data.List a
+GoDown a cmp Data.Bool.false v x xs = (Data.List.cons v (Data.List.cons x xs))
+GoDown a cmp Data.Bool.true v x xs = (Data.List.cons x (Insert cmp v xs))
