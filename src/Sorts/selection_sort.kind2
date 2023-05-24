@@ -1,0 +1,19 @@
+Data.List.selectionsort <a> (cmp: a -> a -> Data.Bool) (xs: Data.List a) : Data.List a
+Data.List.selectionsort a cmp Data.List.nil = Data.List.nil
+Data.List.selectionsort a cmp lst = 
+  let Data.Pair.new fst snd = Data.List.selectionsort.leastunsorted cmp lst
+  Data.List.cons fst (Data.List.selectionsort cmp snd)
+  
+#partial
+Data.List.selectionsort.leastunsorted <a> (cmp: a -> a -> Data.Bool) (xs: Data.List a) : Data.Pair a (Data.List a)
+Data.List.selectionsort.leastunsorted a cmp (Data.List.cons head Data.List.nil) = Data.Pair.new head []
+Data.List.selectionsort.leastunsorted a cmp (Data.List.cons head tail) = 
+  let Data.Pair.new fst snd = Data.List.selectionsort.leastunsorted cmp tail
+
+  if (cmp head fst) {Data.Pair.new head tail} else {Data.Pair.new fst (Data.List.cons head snd)}
+//   Data.List.selectionsort.godown (cmp head fst) head fst tail snd
+
+
+// Data.List.selectionsort.godown <a> (b: Data.Bool) (x: a) (y: a) (xs: Data.List a) (ys: Data.List a) : Data.Pair a (Data.List a)
+// Data.List.selectionsort.godown a Data.Bool.false x y xs ys = Data.Pair.new y (Data.List.cons x ys)
+// Data.List.selectionsort.godown a Data.Bool.true x y xs ys = Data.Pair.new x xs

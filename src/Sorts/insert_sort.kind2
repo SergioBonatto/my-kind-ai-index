@@ -1,0 +1,11 @@
+Data.List.insertionsort <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) : (Data.List a)
+Data.List.insertionsort a cmp Data.List.nil = [] //Empty list is empty
+Data.List.insertionsort a cmp (Data.List.cons head Data.List.nil) = [head] // Singleton list is always trivially sorted.
+Data.List.insertionsort a cmp (Data.List.cons head tail) = Data.List.insertionsort.insert cmp head (Data.List.insertionsort cmp tail)
+
+// -- Assumes that the second argument is an alread-sorted list,
+// -- and inserts the first argument in the appropriate position
+Data.List.insertionsort.insert <a> (cmp: a -> a -> Data.Bool) (v: a) (xs: Data.List a)  :  Data.List a
+Data.List.insertionsort.insert a cmp v Data.List.nil            = (Data.List.cons v Data.List.nil)
+Data.List.insertionsort.insert a cmp v (Data.List.cons t x xs)  = 
+  if (cmp v x) {(Data.List.cons v (Data.List.cons x xs))} else {Data.List.cons x (Data.List.insertionsort.insert cmp v xs)}
