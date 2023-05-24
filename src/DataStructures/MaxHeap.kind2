@@ -1,51 +1,52 @@
-// module DataStructures.MaxHeap where
-//
-type Ordering {
-    less
-    equal
-    greater
-}
-type Ord (t) {
-    ord (f : t -> t -> Ordering)
-}
+InstanceCmp (n: Data.U60) (m: Data.U60) : Data.Cmp 
+InstanceCmp 0 0 = Data.Cmp.eql
+InstanceCmp 0 m = Data.Cmp.ltn  
+InstanceCmp n 0 = Data.Cmp.gtn
+InstanceCmp n m = InstanceCmp (- n 1) (- m 1)
 
-// InstanceOrdNat : Ord Data.Nat
-// InstanceOrdNat = Ord.ord Data.Nat.le
+// index : List a -> Nat -> a
+// index [] _ = ?indexEmpty
+// index (x :: _) 0 = x
+// index (_ :: xs) n = index xs (n - 1)
+Index (xs: Data.List Data.U60) (n: Data.Nat)          : Data.Maybe Data.U60
+Index Data.List.nil n                                 = Data.Maybe.none
+Index (Data.List.cons xs.h xs.t) Data.Nat.zero        = Data.Maybe.some (xs.h)
+Index (Data.List.cons xs.h xs.t) (Data.Nat.succ n)    = Index xs.t n
 
-// InstanceOrd : Data.Cmp
-// InstanceOrd = Data.Cmp.as_lte
-
-
-// mkheap <t> (ord: Ord t) (ls: Data.List t)
-// mkheap (ord compare)
-
-// mkheap instanceOrdNat [1, 2, 3, 4, 5]
 // -- Construct a max heap (represented as a list) from a given input list
 // maxHeap :: Ord a => [a] -> [a]
 // maxHeap [] = []
 // maxHeap [x] = [x]
 // maxHeap xs = maxHeap' xs (div (length xs) 2)
-MaxHeap <t> (cpm: Data.Cmp) (xs: Data.List t)       : Data.List t
-MaxHeap t cpm Data.List.nil                         = Data.List.nil
-MaxHeap t cpm (Data.List.cons xs.h Data.List.nil)   = [xs.h] 
-MaxHeap t cpm (Data.List.cons xs.h xs.t)            = MaxHeap.aux cpm xs.t (Data.Nat.div (Data.List.length xs.t) 2n)
+MaxHeap (cmp: Data.U60 -> Data.U60 -> Data.Cmp) (xs: Data.List Data.U60) : Data.List Data.U60
+MaxHeap cmp Data.List.nil                             = Data.List.nil
+MaxHeap cmp (Data.List.cons xs.h Data.List.nil)       = [xs.h] 
+MaxHeap cmp (Data.List.cons xs.h xs.t)                = MaxHeap.aux cmp xs.t (Data.Nat.div (Data.List.length xs.t) 2n)
 
 // -- Insert an element into a heap and then fix the heap
 // insert :: Ord a => [a] -> a -> [a]
 // insert [] e = [e]
 // insert xs e = upHeapify (xs ++ [e]) (length xs)
-Insert <t> (cpm: Data.Cmp) (xs: Data.List t) (x: t) : Data.List t
-Insert t cpm Data.List.nil x = [x]
-Insert t cpm xs x = UpHeapfy cpm (Data.List.concat xs [x]) (Data.List.length xs) 
-//
+Insert 
+  (cmp: Data.U60 -> Data.U60 -> Data.Cmp) 
+  (xs: Data.List Data.U60) 
+  (x: Data.U60) 
+  : Data.List Data.U60
+Insert cmp Data.List.nil x  = [x]
+Insert cmp xs x             = UpHeapify cmp (Data.List.concat xs [x]) (Data.List.length xs) 
+
 // -- Recursive helper function for maxHeap
 // maxHeap' :: Ord a => [a] -> Int -> [a]
 // maxHeap' xs 0 = maxHeapify xs 0
 // maxHeap' xs i = maxHeap' (maxHeapify xs i) (i-1)
 // MaxHeap.aux <t> (cpm: Data.Cmp)
-MaxHeap.aux <t> (cpm: Data.Cmp)(xs: Data.List t) (n: Data.Nat) : Data.List t
-MaxHeap.aux t cpm xs Data.Nat.zero      = MaxHeapify cpm xs 0n
-MaxHeap.aux t cpm xs (Data.Nat.succ n)  = MaxHeapify cpm (MaxHeapify cpm xs (Data.Nat.succ n)) n 
+MaxHeap.aux 
+  (cmp: Data.U60 -> Data.U60 -> Data.Cmp)
+  (xs: Data.List Data.U60) 
+  (n: Data.Nat) 
+  : Data.List Data.U60
+MaxHeap.aux cmp xs Data.Nat.zero      = MaxHeapify cmp xs 0n
+MaxHeap.aux cmp xs (Data.Nat.succ n)  = MaxHeapify cmp (MaxHeapify cmp xs (Data.Nat.succ n)) n 
 
 // -- Given a heap and an index (i), move the element at i up the heap until it is in the right position
 // upHeapify :: Ord a => [a] -> Int -> [a]
@@ -54,11 +55,27 @@ MaxHeap.aux t cpm xs (Data.Nat.succ n)  = MaxHeapify cpm (MaxHeapify cpm xs (Dat
 //                | otherwise = upHeapify (swap xs i ip) ip
 //                 where
 //                     ip = parent i
-//
-UpHeapfy <t> (cpm: Data.Cmp) (xs: Data.List t) (n: Data.Nat) : Data.List t
-UpHeapfy t cpm xs Data.Nat.zero = xs
-UpHeapfy t cpm (Data.List.cons xs.h (Data.List.cons xs.n xs.t)) (Data.Nat.succ n) = ?
 
+UpHeapify
+  (cmp: Data.U60 -> Data.U60 ->Data.Cmp) 
+  (xs: Data.List Data.U60) 
+  (n: Data.Nat) 
+  : Data.List Data.U60
+UpHeapify cmp xs Data.Nat.zero = xs
+UpHeapify cmp Data.List.nil n  = Data.List.nil
+UpHeapify cmp (Data.List.cons xs.h xs.t) (n) =
+    let xs  = Data.List.cons xs.h xs.t
+    let ip  = Data.Maybe.extract (Take xs (Parent n)) xs.h (x => x)
+    let i   = Data.Maybe.extract (Take xs         n)  xs.h (x => x)
+    let i2  = Data.U60.to_nat (Data.Maybe.extract (Take xs         n)  xs.h (x => x))
+    let i3  = Data.U60.to_nat (Data.Maybe.extract (Take xs (Parent n)) xs.h (x => x))
+    let cnd = InstanceCmp i ip
+    Data.Bool.if (Data.Cmp.as_lte cnd) xs (UpHeapify cmp (Swap xs i2 i3) i3)
+
+Take (xs: Data.List Data.U60) (n: Data.Nat)            : Data.Maybe Data.U60
+Take Data.List.nil n                              = Data.Maybe.none
+Take (Data.List.cons xs.h xs.t) Data.Nat.zero     = Data.Maybe.some (xs.h)
+Take (Data.List.cons xs.h xs.t) (Data.Nat.succ n) = Take xs.t n 
 
 // -- Given a heap and an index (i), move the element at i down the heap until it is in the right position
 // maxHeapify :: (Ord a) => [a] -> Int -> [a]
@@ -70,16 +87,47 @@ UpHeapfy t cpm (Data.List.cons xs.h (Data.List.cons xs.n xs.t)) (Data.Nat.succ n
 //                     if xs !! (leftChild i) > xs !! i then maxHeapify (swap xs (leftChild i) i) (leftChild i) else xs
 //                 | otherwise =
 //                     if xs !! (rightChild i) > xs !! i then maxHeapify (swap xs (rightChild i) i) (rightChild i) else xs
-MaxHeapify <t> (cpm: Data.Cmp) (xs: Data.List t) (n: Data.Nat) : Data.List t
+MaxHeapify 
+  (cmp: Data.U60 -> Data.U60 -> Data.Cmp) 
+  (xs: Data.List Data.U60)
+  (n: Data.Nat) 
+  : Data.List Data.U60
+MaxHeapify cmp Data.List.nil n = Data.List.nil
+MaxHeapify cmp (Data.List.cons xs.h xs.t) n =
+  let xs   = Data.List.cons  xs.h   xs.t
+  let hac  = HasAnyChild     xs     n
+  let hlc  = HasLeftChild    xs     n
+  let hrc  = HasRightChild   xs     n
+  let tke  = Data.Maybe.extract     (Take xs n) xs.h (x => x)
+  let nhc  = Data.Bool.not   hac
+  let hbc  = Data.Bool.and   hlc    hrc
+  let larg = InstanceCmp     tke    xs.h
+  let ltn  = Data.Cmp.as_ltn larg
+  let gtn  = Data.Cmp.as_gtn larg
+  let bhlc = Data.Bool.if    ltn    (MaxHeapify cmp (Swap xs (LeftChild  n) n) (LeftChild  n)) xs
+  let othr = Data.Bool.if    gtn    (MaxHeapify cmp (Swap xs (RightChild n) n) (RightChild n)) xs
+  let cndl = Data.U60.greater_than  (Data.Maybe.extract (Take xs (LeftChild n)) 0 (y => y)) (Data.Maybe.extract (Take xs (RightChild n)) 0 (y => y))
+  let bigc = Data.Bool.if    cndl   (LeftChild n) (RightChild n)
+  let lgi  = Data.U60.greater_than  (Data.Maybe.extract (Take xs bigc) 0 (y => y)) (Data.Maybe.extract (Take xs n) 0 (y => y))
+  let bigd = Data.Bool.if    lgi    (MaxHeapify cmp (Swap xs bigc n) bigc) xs
+  Data.Bool.if hac xs (Data.Bool.if  hbc bigd (Data.Bool.if hlc bhlc othr))
 
-//
-//
 // -- Remove the largest element from the heap, and then fix the heap
 // extract :: Ord a => [a] -> [a]
 // extract [] = []
 // extract [_] = []
 // extract xs = maxHeapify ((last xs):take (length xs - 2) (tail xs)) 0
-//
+Extract 
+  (cmp: Data.U60 -> Data.U60 -> Data.Cmp) 
+  (xs: Data.List Data.U60)   
+  : Data.List Data.U60
+Extract cmp Data.List.nil                         = Data.List.nil
+Extract cmp (Data.List.cons xs.h Data.List.nil)   = Data.List.nil
+Extract cmp (Data.List.cons xs.h xs.t) = 
+  let xs = Data.List.cons xs.h xs.t
+  (MaxHeapify ((cmp) )  xs.t 0n) // FIXME: corrigir
+
+
 // -- Delete an element from a heap and then fix the heap
 // -- If the element is not present, return the heap as is
 // delete :: Ord a => [a] -> a -> [a]
@@ -88,44 +136,117 @@ MaxHeapify <t> (cpm: Data.Cmp) (xs: Data.List t) (n: Data.Nat) : Data.List t
 //                   f = if xs !! (length xs - 1) > e then upHeapify else maxHeapify
 //                   in case i' of
 //                       Nothing -> xs
-//                       Just i  -> f (take ((length xs) - 1) (swap xs i ((length xs) - 1))) i
-//
+                      // Just i  -> f (take ((length xs) - 1) (swap xs i ((length xs) - 1))) i
+Delete 
+  (cmp: Data.U60 -> Data.U60 ->  Data.Cmp) 
+  (xs:  Data.List Data.U60)
+  (x:   Data.U60)
+  : Data.List Data.U60
+Delete cmp Data.List.nil x = Data.List.nil
+Delete cmp (Data.List.cons xs.h xs.t) x =
+  let xs = Data.List.cons xs.h xs.t
+  let i1 = Search cmp xs x
+  let t1 = Data.U60.greater_than (Data.Maybe.extract (Take xs (Data.List.length xs.t)) 0 (k => k)) x
+  match Data.Maybe i1 {
+    none => xs
+    some value => 
+      let tk = Data.List.take (Swap xs value (Data.List.length xs.t)) (Data.List.length xs.t) 
+      let f1 = UpHeapify  cmp tk value 
+      let f2 = MaxHeapify cmp tk value 
+      Data.Bool.if t1 f1 f2
+  } 
+  
 // -- Find the index of an element in a heap
 // -- Returns Nothing if the element is not present
 // search :: Eq a => [a] -> a -> Maybe Int
 // search xs e = search' xs e 0
-//
+Search
+  (cmp: Data.U60 -> Data.U60 -> Data.Cmp)
+  (xs: Data.List Data.U60)
+  (x: Data.U60)
+  : Data.Maybe Data.Nat
+Search cmp xs x = Search.aux cmp xs x 0n
+
 // -- Recursive helper function for search
 // search' :: Eq a => [a] -> a -> Int -> Maybe Int
 // search' [] _ _ = Nothing
 // search' (x:xs) e i | e == x = Just i
 //                    | otherwise = search' xs e (i+1)
-//
-//
+Search.aux 
+  (cpm: Data.U60 -> Data.U60 -> Data.Cmp)
+  (xs: Data.List Data.U60)
+  (x: Data.U60)
+  (n: Data.Nat)
+  : Data.Maybe Data.Nat
+Search.aux cmp Data.List.nil x n = Data.Maybe.none
+Search.aux cmp (Data.List.cons xs.h xs.t) x n =
+  let eq = (Data.U60.equal xs.h x)
+  Data.Bool.if eq (Data.Maybe.some n) (Search.aux cmp xs.t x (Data.Nat.succ n))
+
 // -- Swap the values stored in two positions in a list
 // swap :: [a] -> Int -> Int -> [a]
-// swap xs i1 i2 = map snd . foldr (\x a ->
+// swap xs i1 i2 = map snd . foldr
+//   (\x a ->
 //         if fst x == i1 then ys !! i2 : a
 //         else if fst x == i2 then ys !! i1 : a
 //         else x : a) [] $ ys
 //     where ys = zip [0..] xs
-//
+Swap (xs: Data.List Data.U60) (n: Data.Nat) (m: Data.Nat) : Data.List Data.U60
+Swap Data.List.nil n m              = Data.List.nil
+Swap (Data.List.cons xs.h xs.t) n m =
+  let xs = Data.List.cons xs.h xs.t
+  let ns = Data.List.enumerate xs
+  let fs = (Data.List.foldr 
+  0 
+  ((k : (Data.Pair Data.Nat Data.U60)) => (c: Data.U60) =>
+    let cond1  = Data.Nat.equal (Data.Pair.fst k) n
+    let cond2  = Data.Nat.equal (Data.Pair.fst k) m
+    let obj1   = Data.Maybe.extract (Take xs m) 0 (v => v):: Data.U60
+    let obj2   = Data.Maybe.extract (Take xs n) 0 (v => v):: Data.U60
+    Data.Bool.if cond1 obj1 (Data.Bool.if cond2 obj2 c)
+  ) ns)
+  
+  ?
+// ((x_1 : (Data.Pair x_2 _)) -> (x_2 : ((x_3 : (Data.Pair Data.U60 Data.U60)) -> Data.U60)) -> (x_3 : (Data.Pair Data.U60 Data.U60)) -> Data.U60)
+
+// (foldr (\x a =>
+        // if fst x == i1 then ys !! i2 :: a
+        // else if fst x == i2 then ys !! i1 :: a
+        // else x :: a) [] ys)
+
+// (foldr (\x a => if fst x == i1 then ys !! i2 :: a else if fst x == i2 then ys !! i1 :: a else x :: a) [] ys)
+
+
+
 // -- Index where the left child of the node at the given index should be located
 // leftChild :: Int -> Int
 // leftChild i = 2 * i + 1
-//
+LeftChild (n: Data.Nat) : Data.Nat
+LeftChild n = Data.Nat.succ (Data.Nat.double n)
+
 // -- Index where the right child of the node at the given index should be located
 // rightChild :: Int -> Int
 // rightChild i = 2 * i + 2
-//
+RightChild (n: Data.Nat) : Data.Nat
+RightChild n = Data.Nat.succ (Data.Nat.succ (Data.Nat.double n))
+
 // -- Index where the parent of the node at the given index should be located
 // parent ::  Int -> Int
 // parent i = floor (fromIntegral (div (i-1) 2))
-//
+Parent (n: Data.Nat)      : Data.Nat
+Parent Data.Nat.zero      = Data.Nat.zero
+Parent (Data.Nat.succ n)  = (Data.Nat.div n 2n)
+
 // -- Helper functions to determine which, if any, child nodes are present in the heap for the node at a given index
 // hasLeftChild, hasRightChild, hasAnyChild :: [a] -> Int -> Bool
 // hasLeftChild xs i = leftChild i < length xs
-//
+HasLeftChild (xs: Data.List Data.U60) (n: Data.Nat) : Data.Bool
+HasLeftChild xs n = Data.Nat.ltn (LeftChild n) (Data.List.length xs)
+
 // hasRightChild xs i = rightChild i < length xs
-//
+HasRightChild (xs: Data.List Data.U60) (n: Data.Nat) : Data.Bool
+HasRightChild xs n = Data.Nat.ltn (RightChild n) (Data.List.length xs)
+
 // hasAnyChild xs i = hasLeftChild xs i || hasRightChild xs i
+HasAnyChild (xs: Data.List Data.U60) (n: Data.Nat) : Data.Bool
+HasAnyChild xs n = Data.Bool.or (HasLeftChild xs n) (HasRightChild xs n)
