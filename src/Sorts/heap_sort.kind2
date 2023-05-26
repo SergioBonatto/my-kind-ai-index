@@ -94,7 +94,7 @@ Extract.last a (Data.List.cons head tail)             = Extract.last tail
 // // extract [_] = []
 // // extract xs = maxHeapify ((last xs):take (length xs - 2) (tail xs)) 0
 
-
+ 
 // Data.List.zip_index <a> (bs: Data.List a) : Data.List (Data.Pair Data.Nat a)
 // Data.List.zip_index a bs = Data.List.zip_index.aux 0n bs
 
@@ -105,10 +105,11 @@ Extract.last a (Data.List.cons head tail)             = Extract.last tail
 //   Data.List.cons head tail
 // Data.List.zip_index.aux a n bs = Data.List.nil
 
+// -----------------------------144000------------------------- List [1..20]
 // Maxheapify.swap <a> (xs: Data.List a) (n: Data.Nat) (m: Data.Nat) : Data.List a
 // Maxheapify.swap a xs n m = 
 //   let ys = Data.List.zip_index  xs
-//   let fold = Data.List.foldr (Data.Pair Data.Nat a) (Data.List (Data.Pair Data.Nat a)) ys (x => y => (
+//   let fold = Data.List.foldr (Data.Pair Data.Nat a) (Data.List (Data.Pair Data.Nat a)) [] (x => y => (
 //   if (Data.Nat.equal (Data.Pair.fst x) n) {
 //     (Data.List.cons (Data.List.index_plus ys m) y)
 //   } else {
@@ -118,10 +119,10 @@ Extract.last a (Data.List.cons head tail)             = Extract.last tail
 //       (Data.List.cons x y)
 //     })
 //   }
-// )) []
+// )) ys
 //   Data.List.map (fold) (x => Data.Pair.snd x)
 
-
+// -----------------------------44000------------------------- List [1..20]
 Maxheapify.swap <a> (xs: Data.List a) (n: Data.Nat) (m: Data.Nat) : Data.List a
 Maxheapify.swap a xs n m = (Maxheapify.swap.index a xs (Data.List.length xs) n m) 
 
