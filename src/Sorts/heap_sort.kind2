@@ -1,0 +1,176 @@
+Data.List.heapsort <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) : (Data.List a)
+Data.List.heapsort a cmp Data.List.nil = [] 
+Data.List.heapsort a cmp (Data.List.cons head Data.List.nil) = [head] // Singleton list is always trivially sorted.
+Data.List.heapsort a cmp xs = Data.List.heapsort.aux cmp (Data.List.maxheap cmp xs) []
+// heapSort :: (Ord a) => [a] -> [a]
+// heapSort [] = []
+// heapSort [x] = [x]
+// heapSort xs = heapSort' (maxHeap xs) []
+
+
+Data.List.heapsort.aux <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) (k: Data.List a) : (Data.List a)
+Data.List.heapsort.aux cmp Data.List.nil out = out
+Data.List.heapsort.aux cmp (Data.List.cons head tail) out = Data.List.heapsort.aux cmp (Maxheapify.extract cmp (Data.List.cons head tail)) (Data.List.concat out [head])
+// -- Recursive helper function for heapSort
+// heapSort' :: Ord a => [a] -> [a] -> [a]
+// heapSort' [] out = out
+// heapSort' h out = heapSort' (extract h) out ++ [head h] 
+
+Data.List.maxheap <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) : (Data.List a)
+Data.List.maxheap a cmp Data.List.nil = []
+Data.List.maxheap a cmp (Data.List.cons head Data.List.nil) = [head]
+Data.List.maxheap a cmp xs = Data.List.maxheap.aux cmp xs (Data.Nat.half (Data.List.length xs))
+// -- Construct a max heap (represented as a list) from a given input list
+// maxHeap :: Ord a => [a] -> [a]
+// maxHeap [] = []
+// maxHeap [x] = [x]
+// maxHeap xs = maxHeap' xs (div (length xs) 2)
+Data.List.maxheap.aux <a>  (cmp: a -> a -> Data.Bool) (l: Data.List a) (int: Data.Nat) : (Data.List a)
+Data.List.maxheap.aux a cmp xs Data.Nat.zero = Data.List.maxheapify cmp xs 0n
+Data.List.maxheap.aux a cmp xs (Data.Nat.succ n) = Data.List.maxheap.aux cmp (Data.List.maxheapify cmp xs (Data.Nat.succ n)) n
+// -- Recursive helper function for maxHeap
+// maxHeap' :: Ord a => [a] -> Int -> [a]
+// maxHeap' xs 0 = maxHeapify xs 0
+// maxHeap' xs i = maxHeap' (maxHeapify xs i) (i-1)
+
+#partial
+Data.List.index_plus <a> (xs: Data.List a) (n: Data.Nat) : a
+Data.List.index_plus a (Data.List.cons head tail) Data.Nat.zero = head
+Data.List.index_plus a (Data.List.cons head tail) (Data.Nat.succ n) = Data.List.index_plus tail n 
+
+Data.List.maxheapify <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) (int: Data.Nat) : (Data.List a)
+Data.List.maxheapify a cmp xs i = Data.List.maxheapify.not a cmp xs i (Maxheapify.hasanychild xs i) 
+
+Data.List.maxheapify.not <a> (cmp: a -> a -> Data.Bool)  (l: Data.List a) (int: Data.Nat) (b: Data.Bool) : (Data.List a)
+Data.List.maxheapify.not a cmp xs i Data.Bool.false = xs 
+Data.List.maxheapify.not a cmp xs i Data.Bool.true = Data.List.maxheapify.and a cmp xs i (Maxheapify.hasleftchild xs i) (Maxheapify.hasrightchild xs i)
+
+Data.List.maxheapify.and  <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) (int: Data.Nat) (anda: Data.Bool) (andb: Data.Bool) : (Data.List a)
+Data.List.maxheapify.and a cmp xs i Data.Bool.true Data.Bool.true = 
+  let idxl = (Maxheapify.leftchild i)
+  let idxr = (Maxheapify.rightchild i)
+  let largestchild = if (cmp (Data.List.index_plus xs idxl) (Data.List.index_plus xs idxr)) {
+    idxl
+  } else {
+    idxr
+  }
+  Data.List.maxheapify.godown a cmp (cmp (Data.List.index_plus xs largestchild) (Data.List.index_plus xs i)) xs i largestchild 
+
+Data.List.maxheapify.and a cmp xs i b Data.Bool.false = 
+  let idx = (Maxheapify.leftchild i)
+  Data.List.maxheapify.godown a cmp (cmp (Data.List.index_plus xs idx) (Data.List.index_plus xs i)) xs i idx 
+
+Data.List.maxheapify.and a cmp xs i Data.Bool.false b = 
+  let idx = (Maxheapify.rightchild i)
+  Data.List.maxheapify.godown a cmp (cmp (Data.List.index_plus xs idx) (Data.List.index_plus xs i)) xs i idx 
+
+Data.List.maxheapify.godown <a> (cmp: a -> a -> Data.Bool) (b: Data.Bool) (xs: Data.List a) (int: Data.Nat) (idx: Data.Nat) : (Data.List a)
+Data.List.maxheapify.godown a cmp Data.Bool.false xs i idx = xs
+Data.List.maxheapify.godown a cmp Data.Bool.true xs i idx = Data.List.maxheapify cmp (Maxheapify.swap xs idx i) idx
+
+// // maxHeapify :: (Ord a) => [a] -> Int -> [a]
+// // maxHeapify xs i | not (hasanychild xs i) = xs
+// //                 | hasleftchild xs i && hasrightchild xs i = 
+// //                     let largestchild = if xs !! (leftchild i) > xs !! (rightchild i) then leftchild i else rightchild i
+// //                     in if xs !! largestchild > xs !! i then maxHeapify (swap xs largestchild i) largestchild else xs
+// //                 | hasleftchild xs i =
+// //                     if xs !! (leftchild i) > xs !! i then maxHeapify (swap xs (leftchild i) i) (leftchild i) else xs
+// //                 | otherwise =
+// //                     if xs !! (rightchild i) > xs !! i then maxHeapify (swap xs (rightchild i) i) (rightchild i) else xs
+
+
+// // -- Remove the largest element from the heap, and then fix the heap
+Maxheapify.extract <a> (cmp: a -> a -> Data.Bool) (l: Data.List a) : Data.List a
+Maxheapify.extract a cmp Data.List.nil = []
+Maxheapify.extract a cmp (Data.List.cons head Data.List.nil) = []
+Maxheapify.extract a cmp (Data.List.cons head (Data.List.cons tail.head tail.tail)) = Data.List.maxheapify cmp (Data.List.cons (Extract.last (Data.List.cons head (Data.List.cons tail.head tail.tail))) (Data.List.take (Data.List.cons tail.head tail.tail) (Data.List.length tail.tail))) 0n
+
+#partial
+Extract.last <a> (xs: Data.List a) : a
+Extract.last a (Data.List.cons head (Data.List.nil )) = head
+Extract.last a (Data.List.cons head tail)             = Extract.last tail
+// // extract :: Ord a => [a] -> [a]
+// // extract [] = []
+// // extract [_] = []
+// // extract xs = maxHeapify ((last xs):take (length xs - 2) (tail xs)) 0
+
+
+// Data.List.zip_index <a> (bs: Data.List a) : Data.List (Data.Pair Data.Nat a)
+// Data.List.zip_index a bs = Data.List.zip_index.aux 0n bs
+
+// Data.List.zip_index.aux <a> (n: Data.Nat) (bs: Data.List a) : Data.List (Data.Pair Data.Nat a)
+// Data.List.zip_index.aux a n (Data.List.cons b_ head tail) =
+//   let head = Data.Pair.new n head
+//   let tail = Data.List.zip_index.aux (Data.Nat.succ n) tail
+//   Data.List.cons head tail
+// Data.List.zip_index.aux a n bs = Data.List.nil
+
+// Maxheapify.swap <a> (xs: Data.List a) (n: Data.Nat) (m: Data.Nat) : Data.List a
+// Maxheapify.swap a xs n m = 
+//   let ys = Data.List.zip_index  xs
+//   let fold = Data.List.foldr (Data.Pair Data.Nat a) (Data.List (Data.Pair Data.Nat a)) ys (x => y => (
+//   if (Data.Nat.equal (Data.Pair.fst x) n) {
+//     (Data.List.cons (Data.List.index_plus ys m) y)
+//   } else {
+//     (if (Data.Nat.equal (Data.Pair.fst x) m) {
+//       (Data.List.cons (Data.List.index_fin ys n) y)
+//     } else {
+//       (Data.List.cons x y)
+//     })
+//   }
+// )) []
+//   Data.List.map (fold) (x => Data.Pair.snd x)
+
+
+Maxheapify.swap <a> (xs: Data.List a) (n: Data.Nat) (m: Data.Nat) : Data.List a
+Maxheapify.swap a xs n m = (Maxheapify.swap.index a xs (Data.List.length xs) n m) 
+
+
+Maxheapify.swap.index <a> (xs: (Data.List a)) (n: Data.Nat) (m: Data.Nat) (o: Data.Nat) : Data.List a
+Maxheapify.swap.index a xs Data.Nat.zero m o = xs
+// Maxheapify.swap.index a xs n m Data.Nat.zero = xs
+// Maxheapify.swap.index a xs m Data.Nat.zero Data.Nat.zero = xs
+Maxheapify.swap.index a Data.List.nil n m o = []
+Maxheapify.swap.index a xs n m o =
+  if (Data.Bool.and (Data.Bool.or (Data.Nat.gte m n) (Data.Nat.gte o n)) (Data.Bool.or (Data.Nat.equal 0n m) ((Data.Nat.equal 0n o)))) { xs } else {  
+    // if (Data.Nat.equal m o) { xs } else {
+      if (Data.Nat.gtn o m) {
+        let Data.Pair.new (fst = before) (snd = elem1after)  = Data.List.split_at xs m
+        let Data.Pair.new fst snd = Data.List.split_at elem1after (Data.Nat.sub o m)
+        Data.List.concat before (Maxheapify.swap.index.mount fst snd)
+    } else {
+      let Data.Pair.new (fst = before) (snd = elem1after)  = Data.List.split_at xs o
+      let Data.Pair.new fst snd = Data.List.split_at elem1after (Data.Nat.sub m o)
+      Data.List.concat before (Maxheapify.swap.index.mount fst snd)
+    }
+  } 
+// }
+
+Maxheapify.swap.index.mount <a> (xs: (Data.List a)) (ys: (Data.List a)) : Data.List a
+Maxheapify.swap.index.mount a (Data.List.nil) (Data.List.nil) = []
+Maxheapify.swap.index.mount a fst (Data.List.nil) = fst
+Maxheapify.swap.index.mount a (Data.List.nil) snd = snd
+Maxheapify.swap.index.mount a (Data.List.cons head tail) (Data.List.cons head_ tail_) = 
+  (Data.List.cons head_ (Data.List.concat tail (Data.List.cons head tail_)))
+
+// -- Index where the left child of the node at the given index should be located
+
+Maxheapify.leftchild (n: Data.Nat) : Data.Nat
+Maxheapify.leftchild i = (Data.Nat.succ (Data.Nat.mul 2n i))
+
+// -- Index where the right child of the node at the given index should be located
+
+Maxheapify.rightchild (n: Data.Nat) : Data.Nat
+Maxheapify.rightchild i = (Data.Nat.succ (Data.Nat.succ (Data.Nat.mul 2n i)))
+
+// -- Helper functions to determine which, if any, child nodes are present in the heap for the node at a given index
+// hasleftchild, hasrightchild, hasanychild :: [a] -> Int -> Data.Bool
+
+Maxheapify.hasleftchild <a> (l: Data.List a) (n: Data.Nat) :  Data.Bool
+Maxheapify.hasleftchild xs i = Data.Nat.ltn (Maxheapify.leftchild i) (Data.List.length xs)
+
+Maxheapify.hasrightchild <a> (l: Data.List a) (n: Data.Nat) :  Data.Bool
+Maxheapify.hasrightchild xs i = Data.Nat.ltn (Maxheapify.rightchild i) (Data.List.length xs)
+
+Maxheapify.hasanychild <a> (l: Data.List a) (n: Data.Nat) :  Data.Bool
+Maxheapify.hasanychild xs i = Data.Bool.or (Maxheapify.hasleftchild xs i) (Maxheapify.hasrightchild xs i)
