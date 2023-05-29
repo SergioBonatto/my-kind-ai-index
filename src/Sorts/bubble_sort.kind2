@@ -1,0 +1,11 @@
+Data.List.bubblesort <a> (cmp: a -> a -> Data.Bool) (xs: Data.List a) : Data.List a
+Data.List.bubblesort a cmp Data.List.nil         = Data.List.nil
+Data.List.bubblesort a cmp (Data.List.cons t x xs) = Data.List.bubblesort.insert cmp x (Data.List.bubblesort cmp xs)
+
+Data.List.bubblesort.insert <a> (cmp: a -> a -> Data.Bool) (v: a) (xs: Data.List a)  :  Data.List a
+Data.List.bubblesort.insert a cmp v Data.List.nil            = (Data.List.cons v Data.List.nil)
+Data.List.bubblesort.insert a cmp v (Data.List.cons t x xs)  = (Data.List.bubblesort.godown cmp (cmp v x) v x xs)
+
+Data.List.bubblesort.godown <a> (cmp: a -> a -> Data.Bool) (b: Data.Bool) (v: a) (x: a) (xs: Data.List a) : Data.List a
+Data.List.bubblesort.godown a cmp Data.Bool.false v x xs = (Data.List.cons v (Data.List.cons x xs))
+Data.List.bubblesort.godown a cmp Data.Bool.true v x xs = (Data.List.cons x (Data.List.bubblesort.insert cmp v xs))
