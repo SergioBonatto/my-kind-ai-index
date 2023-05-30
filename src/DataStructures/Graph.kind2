@@ -1,0 +1,55 @@
+type Graph {
+  new (edge: Data.List (Data.Pair Data.U60 (Data.List Data.U60)))
+}
+// Function to add an edge to graph
+
+Graph.addedge (g: Graph) (p: Data.Pair Data.U60 Data.U60) : Graph
+Graph.addedge (Graph.new e) p = Graph.new (Graph.updategraph e p)
+
+Graph.updategraph (edge: Data.List (Data.Pair Data.U60 (Data.List Data.U60)))  (p: Data.Pair Data.U60 Data.U60) : (Data.List (Data.Pair Data.U60 (Data.List Data.U60)))
+Graph.updategraph Data.List.nil (Data.Pair.new fst snd) = [(Data.Pair.new fst [snd])]
+Graph.updategraph (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) (Data.Pair.new fst snd) = 
+// if (Data.U60.to_bool (== head fst)) {
+//   Data.List.cons (Data.Pair.new head (Data.List.cons snd tail)) tail.tail
+// } else {
+//   Data.List.cons (Data.Pair.new head tail) (Graph.updategraph tail.tail (Data.Pair.new fst snd))  
+// }
+	Graph.updategraph.godown (== head fst) (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) (Data.Pair.new fst snd)
+
+	Graph.updategraph.godown (cond: Data.U60) (edge: Data.List (Data.Pair Data.U60 (Data.List Data.U60)))  (p: Data.Pair Data.U60 Data.U60) : (Data.List (Data.Pair Data.U60 (Data.List Data.U60)))
+	Graph.updategraph.godown n Data.List.nil p = Data.List.nil   
+	Graph.updategraph.godown 0 (Data.List.cons head tail) p = Data.List.cons head (Graph.updategraph tail p)   
+	Graph.updategraph.godown n (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) (Data.Pair.new fst snd) = Data.List.cons (Data.Pair.new head (Data.List.cons snd tail)) tail.tail   
+
+Graph.BFS (g: Graph) (init: Data.U60) : Data.List Data.U60
+Graph.BFS g init = Graph.BFS.visit g [init] []
+
+Graph.BFS.visit (g: Graph) (init: Data.List Data.U60) (visit: Data.List Data.U60)  : Data.List Data.U60
+Graph.BFS.visit g Data.List.nil visit  = Data.List.reverse visit
+Graph.BFS.visit g (Data.List.cons head tail) visit = 
+let neighbours = (Data.List.filter (Get.adjacent head g) (x => NotElem x (Data.List.cons head visit)))
+let neighbours = (Data.List.concat tail neighbours)
+// newVisited
+// neighbours
+Graph.BFS.visit g neighbours (Data.List.cons head visit)
+
+
+NotElem (t: Data.U60) (l: Data.List Data.U60) : Data.Bool
+NotElem t Data.List.nil = Data.Bool.true
+NotElem t (Data.List.cons xs.h xs.t) = if (Data.U60.to_bool (== t xs.h)) {
+  Data.Bool.false
+} else {
+  NotElem t xs.t
+}
+
+Get.adjacent (n: Data.U60) (g: Graph) : Data.List Data.U60
+Get.adjacent n (Graph.new e) = Graph.adjacent.vertices n e
+
+Graph.adjacent.vertices (n: Data.U60) (edge: Data.List (Data.Pair Data.U60 (Data.List Data.U60))) : Data.List Data.U60
+Graph.adjacent.vertices n (Data.List.nil)  = []
+Graph.adjacent.vertices n (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = 
+ if (Data.U60.to_bool (== n head)) {
+  tail
+ } else {
+  Graph.adjacent.vertices n tail.tail
+ }
