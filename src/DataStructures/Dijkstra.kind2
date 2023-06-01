@@ -116,3 +116,19 @@ DAG.Dijkstra.go edge visit dist =
 //           newVisited = u :: visited
 //           newUnvisited = filter (\(v, _) => notElem v newVisited) updatedNeighbors
 //       in (u, minDist) :: dijkstraHelper edges newVisited newUnvisited
+
+DAG.BFS (g: DAG) (init: Data.U60) : Data.List Data.U60
+DAG.BFS g init = DAG.BFS.visit g [init] []
+
+DAG.BFS.visit (g: DAG) (init: Data.List Data.U60) (visit: Data.List Data.U60)  : Data.List Data.U60
+DAG.BFS.visit g Data.List.nil visit = Data.List.reverse visit
+DAG.BFS.visit g (Data.List.cons head tail) visit = 
+let newVisited = if (Data.List.any visit (x => (Data.U60.to_bool (== x head)))) {visit} else {(Data.List.cons head visit)} // ruim
+// let newVisited = (Data.List.cons head visit)
+let neighbours = Data.List.map (DAG.adjacent head g) (x => (Data.Pair.fst x))
+let neighbours = (Data.List.filter neighbours (x => NotElem x newVisited))
+// let newVisited = Data.List.concat newVisited neighbours
+let neighbours = (Data.List.concat tail neighbours)
+// newVisited
+// neighbours
+(DAG.BFS.visit g neighbours newVisited)
