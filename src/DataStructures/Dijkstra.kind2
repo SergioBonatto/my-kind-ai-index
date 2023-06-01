@@ -1,0 +1,118 @@
+type DAG {
+  new (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60))))
+}
+// -- This data structure represents a directed weighted graph
+// -- using adjacency list representation
+DAG.add (dag: DAG) (u: Data.U60) (v: Data.U60) (w: Data.U60)  : DAG 
+DAG.add (DAG.new edge) u v w = DAG.new (DAG.updatedag edge u v w)
+
+DAG.updatedag (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))) (u: Data.U60) (v: Data.U60) (w: Data.U60) : Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))
+DAG.updatedag Data.List.nil p v w = [(Data.Pair.new p [(Data.Pair.new v w)])]
+DAG.updatedag (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) u v w = 
+  DAG.updatedag.godown ((== head u)) u v w (Data.List.cons ((Data.Pair.new head tail)) tail.tail)
+
+// if (Data.U60.to_bool (== head u)) {
+//   Data.List.cons (Data.Pair.new head (Data.List.cons (Data.Pair.new v w) tail)) tail.tail
+// } else {
+//   Data.List.cons (Data.Pair.new head tail) (DAG.updatedag tail.tail u v w)  
+// }
+
+// DAG.updatedag.godown (cond: Data.Bool) (u: Data.U60) (v: Data.U60) (w: Data.U60) (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))) : Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))
+// DAG.updatedag.godown Data.Bool.false u v w (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = Data.List.cons (Data.Pair.new head tail) (DAG.updatedag tail.tail u v w)  
+// DAG.updatedag.godown Data.Bool.true  u v w (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = Data.List.cons (Data.Pair.new head (Data.List.cons (Data.Pair.new v w) tail)) tail.tail   
+DAG.updatedag.godown (cond: Data.U60) (u: Data.U60) (v: Data.U60) (w: Data.U60) (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))) : Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))
+DAG.updatedag.godown 0 u v w (Data.List.cons head tail) = Data.List.cons head (DAG.updatedag tail u v w)  
+// DAG.updatedag.godown 0 u v w (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = ? //Data.List.cons (Data.Pair.new head tail) (DAG.updatedag tail.tail u v w)  
+DAG.updatedag.godown n u v w (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = Data.List.cons (Data.Pair.new head (Data.List.cons (Data.Pair.new v w) tail)) tail.tail   
+DAG.updatedag.godown cond u v w Data.List.nil = Data.List.nil   
+
+
+DAG.adjacent (n: Data.U60) (g: DAG) : Data.List (Data.Pair Data.U60 Data.U60)
+DAG.adjacent n (DAG.new e) = DAG.adjacent.vertices n e
+
+DAG.adjacent.vertices (n: Data.U60) (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))) : Data.List (Data.Pair Data.U60 Data.U60)
+DAG.adjacent.vertices n (Data.List.nil)  = []
+DAG.adjacent.vertices n (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) = 
+ if (Data.U60.to_bool (== n head)) {
+  Data.List.reverse tail
+ } else {
+  DAG.adjacent.vertices n tail.tail
+ }
+
+Nub <a> (cmp: a -> a -> Data.Bool) (la: Data.List a) : Data.List a
+Nub a cmp Data.List.nil = []
+Nub a cmp (Data.List.cons head tail) = Data.List.cons head (Nub a cmp (Data.List.filter tail (x => Data.Bool.not (cmp head x))))
+
+NotElem (t: Data.U60) (l: Data.List Data.U60) : Data.Bool
+NotElem t Data.List.nil = Data.Bool.true
+NotElem t (Data.List.cons xs.h xs.t) = if (Data.U60.to_bool (== t xs.h)) {
+  Data.Bool.false
+} else {
+  NotElem t xs.t
+}
+
+ConcatMap <a> <b> (f: a -> (Data.List b )) (la: Data.List a) : Data.List b
+ConcatMap a b f Data.List.nil = []
+ConcatMap a b f (Data.List.cons t head tail) = Data.List.concat (f head) (ConcatMap f tail)
+
+// - Função auxiliar para encontrar o vértice com a menor distância
+Maxbound : Data.U60
+Maxbound = 999999
+
+DAG.minimum.distance (lp: Data.List (Data.Pair Data.U60 Data.U60)) : (Data.Pair Data.U60 Data.U60)
+DAG.minimum.distance Data.List.nil = Data.Pair.new 0 Maxbound
+DAG.minimum.distance (Data.List.cons (Data.Pair t c) (Data.Pair.new head tail) tail.tail) = 
+    let Data.Pair.new (fst = minv) (snd = mind) = DAG.minimum.distance tail.tail
+    if (Data.U60.to_bool (< tail mind)) {Data.Pair.new head tail} else {Data.Pair.new minv mind}
+// minimumDistance : List (Int, Int) -> (Int, Int)
+// minimumDistance [] = (0, maxBound)
+// minimumDistance ((v, d) :: xs) =
+//   let (minV, minD) = minimumDistance xs
+//   in if d < minD then (v, d) else (minV, minD)
+
+// -- Função auxiliar para atualizar as distâncias dos vizinhos
+
+DAG.update.distance (lpf: Data.List (Data.Pair Data.U60 Data.U60)) (lps: Data.List (Data.Pair Data.U60 Data.U60)) (i: Data.U60) : Data.List (Data.Pair Data.U60 Data.U60) 
+DAG.update.distance Data.List.nil acc i = Data.List.reverse acc
+DAG.update.distance (Data.List.cons (Data.Pair t c) (Data.Pair.new head tail) tail.tail) acc i = 
+    let mind = if (Data.U60.to_bool (< (+ tail i) Maxbound)) {(+ tail i)} else {Maxbound}
+    DAG.update.distance tail.tail ((Data.List.cons (Data.Pair.new head mind) acc)) i
+// updateDistances : List (Int, Int) -> List (Int, Int) -> Int -> List (Int, Int)
+// updateDistances [] acc _ = reverse acc
+// updateDistances ((v, d) :: xs) acc dist =
+//   let newDist = if d + dist < maxBound then d + dist else maxBound
+//   in updateDistances xs ((v, newDist) :: acc) dist
+
+// -- Algoritmo de Dijkstra
+DAG.Dijkstra (dag: DAG) (i: Data.U60) : Data.List (Data.Pair Data.U60 Data.U60)
+DAG.Dijkstra (DAG.new edges) start = 
+    let vertices = Nub (x => y => (Data.U60.to_bool (== x y))) (ConcatMap (x => (Data.List.cons (Data.Pair.fst x) (Data.List.map (Data.Pair.snd x) ((y => Data.Pair.fst y))))) edges)
+    let distances = Data.List.map vertices (x => (if (Data.U60.to_bool (== x start)) {(Data.Pair.new x 0)} else {((Data.Pair.new x Maxbound))}))
+    (DAG.Dijkstra.go edges [] distances)
+// dijkstra : Graph -> Int -> List (Int, Int)
+// dijkstra (MkGraph edges) start =
+//   let vertices = nub (concatMap (\(v, adj) => v :: map (\(v', _) => v') adj) edges)
+//       distances = map (\v => if v == start then (v, 0) else (v, maxBound)) vertices
+//       visited = []
+//       unvisited = distances
+//   in dijkstraHelper edges visited unvisited
+DAG.Dijkstra.go (edge: Data.List (Data.Pair Data.U60 (Data.List (Data.Pair Data.U60 Data.U60)))) (visit: Data.List Data.U60) (dist: Data.List (Data.Pair Data.U60 Data.U60)) : Data.List (Data.Pair Data.U60 Data.U60)
+DAG.Dijkstra.go edge visit Data.List.nil = []
+DAG.Dijkstra.go edge visit dist = 
+    let Data.Pair.new fst snd = DAG.minimum.distance dist
+    let neighbors = DAG.adjacent.vertices fst edge
+    let update = DAG.update.distance neighbors dist snd
+    let newvisit = Data.List.cons fst visit
+    let newdist = Data.List.filter update (x => NotElem (Data.Pair.fst x) newvisit)
+    Data.List.cons (Data.Pair.new fst snd) (DAG.Dijkstra.go edge newvisit newdist)
+//     dijkstraHelper : List (Int, List (Int, Int)) -> List Int -> List (Int, Int) -> List (Int, Int)
+//     dijkstraHelper _ _ [] = []
+//     dijkstraHelper edges visited unvisited =
+//       let (u, minDist) = minimumDistance unvisited
+//           neighbors = case lookup u edges of
+//                         Just adj -> adj
+//                         Nothing  -> []
+//           updatedNeighbors = updateDistances neighbors unvisited minDist
+//           newVisited = u :: visited
+//           newUnvisited = filter (\(v, _) => notElem v newVisited) updatedNeighbors
+//       in (u, minDist) :: dijkstraHelper edges newVisited newUnvisited
