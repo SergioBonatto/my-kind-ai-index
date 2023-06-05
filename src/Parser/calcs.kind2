@@ -1,0 +1,146 @@
+// TODO: define appropriate data types for failure/success
+// TODO: add support for more operations
+type Expr {
+	Val (e: Data.U60)
+	Add (e: Expr) (d: Expr)
+	Mul (e: Expr) (d: Expr)
+	Sub (e: Expr) (d: Expr)
+}
+
+#derive[match]
+type Token {
+	tk (e: Expr)
+	op (s: Data.String)
+}
+
+type Nat {
+  zero 
+  succ (pred: Nat)
+	
+}
+
+Ops : Data.List (Data.Pair Data.Char Data.U60)
+Ops = [(Data.Pair.new '+' 1),(Data.Pair.new '-' 1),(Data.Pair.new '*' 2)]
+
+Eval (s: Data.String) : Data.U60
+Eval str = Evalh (Unwrap (Transform (Tokenize (Normalize str))))
+
+Evalh (e: Expr) : Data.U60
+Evalh (Expr.Val e) = e 
+Evalh (Expr.Add e d) = (+ (Evalh e) (Evalh d))
+Evalh (Expr.Mul e d) = (* (Evalh e) (Evalh d))
+Evalh (Expr.Sub e d) = (- (Evalh e) (Evalh d)) 
+
+#partial
+Unwrap (lt: Data.List Token) : Expr
+Unwrap (Data.List.cons (Token.tk e) tail) = e
+
+Transform (lt: Data.List Token) : Data.List Token
+Transform tks = 
+	let idx = Precedence.Highest.Idx tks  
+	if ((Data.U60.to_bool (== idx 0))) { 
+		tks	
+	} else {
+		let take = Data.List.take tks (Data.U60.to_nat (- idx 1))
+		let max = (Index.U60 tks (+ idx 1))
+		let min = (Index.U60 tks (- idx 1))
+		let nor = (Index.U60 tks  idx)
+		let bitr = Transform.binary min nor max 
+		let drop = Data.List.drop tks (Data.U60.to_nat (+ idx 2))
+		Transform (Data.List.concat take (Data.List.concat [bitr] drop))
+	}
+
+#partial
+Transform.binary (t: Token) (o: Token) (u: Token) : Token
+Transform.binary (Token.tk left) (Token.op "*") (Token.tk right) = Token.tk (Expr.Mul left right)
+Transform.binary (Token.tk left) (Token.op "+") (Token.tk right) = Token.tk (Expr.Add left right)
+Transform.binary (Token.tk left) (Token.op "-") (Token.tk right) = Token.tk (Expr.Sub left right)
+
+Precedence.Highest.Idx (lt: Data.List Token) : Data.U60
+Precedence.Highest.Idx tks = 
+	let xs = Precedence.map tks
+	if Data.U60.to_bool (== (Maximum xs) 0) {
+		0
+	} else {
+		let len = Data.List.enumerate xs 
+		let map = Data.List.map len (x => (Data.Nat.to_u60 (Data.Pair.fst x)))
+		let fil = Data.List.filter map (x => Data.U60.to_bool (== (Index.U60 xs x) (Maximum xs)))
+		Extract fil
+	}
+
+#partial
+Maximum (lu: Data.List Data.U60) : Data.U60
+Maximum (Data.List.cons head tail) = Maximum.aux head tail
+
+Maximum.aux (u: Data.U60) (lu: Data.List Data.U60) : Data.U60
+Maximum.aux max Data.List.nil = max
+Maximum.aux max (Data.List.cons head tail) = if (Data.U60.to_bool (> head max) ) {(Maximum.aux head tail)} else {(Maximum.aux max tail)}
+
+#partial
+Index.U60 <a> (la: Data.List a) (idx: Data.U60) : a
+Index.U60 a (Data.List.cons head tail) 0 = head
+Index.U60 a (Data.List.cons head tail) n = Index.U60 tail (- n 1)
+
+#partial
+Index.U60.s (la: Data.String) (idx: Data.U60) : Data.Char
+Index.U60.s (Data.String.cons head tail) 0 = head
+Index.U60.s (Data.String.cons head tail) n = Index.U60.s tail (- n 1)
+
+#partial
+Extract.String (xs: Data.String ) : Data.Char
+Extract.String (Data.String.cons head tail) = head
+
+Precedence.map (lt: Data.List Token) : Data.List Data.U60
+Precedence.map tks = Data.List.map tks (x => (
+	match Token x {
+		op s => Precedence.Get (Extract.String s)
+		tk => 0
+	}
+))
+
+#partial
+Extract <a> (xs: Data.List a) : a
+Extract a (Data.List.cons head tail) = head
+
+Precedence.Get (c: Data.Char) : Data.U60
+Precedence.Get c = 
+	let felt = Data.List.filter Ops (x => (Data.U60.to_bool (== c (Data.Pair.fst x)))) 
+	let head = Extract felt
+	let snd = Data.Pair.snd head
+	snd
+
+Tokenize (s: Data.String) : Data.List Token
+Tokenize str = 
+	let lst = Data.String.to_list str 	
+	let val = Data.List.take_while (c => Data.List.is_nil (Data.List.filter Ops (x => (Data.U60.to_bool (== c (Data.Pair.fst x)))))) lst
+	let u60 = Data.Char.to_digit (Data.String.to_char str)
+	let len = (Data.List.length val) 
+	let boo = (Data.Nat.equal (Data.String.length str) len)
+	match Data.Bool boo {
+		true => [(Token.tk (Expr.Val u60))]
+		false => Data.List.cons (Token.tk (Expr.Val u60)) (Data.List.cons (Token.op (Data.Char.to_string  (Index.U60.s str (Data.Nat.to_u60 len)))) (Tokenize (Data.String.drop (Data.Nat.succ len) str)))
+	}
+
+Normalize (s: Data.String) : Data.String
+Normalize Data.String.nil = ""
+Normalize (Data.String.cons s str) = 
+	if (Data.U60.to_bool (== s ' ')) {
+		Normalize str
+	} else {
+		(Data.String.cons s (Normalize str))
+	}
+
+Data.Char.is_digit(x: Data.Char): Data.Bool
+Data.Char.is_digit x = Data.U60.to_bool(& (>= x 48) (<= x 57))
+
+Data.Char.to_digit (x: Data.Char): Data.U60
+Data.Char.to_digit x = if (Data.Char.is_digit x) {(- x 48)} else {x}
+
+Main {
+	let str = "2 + 3 * 4 - 5" // 9
+	let tkn = [(Token.tk (Expr.Val 2)), Token.op "+", (Token.tk (Expr.Val 3)), Token.op "*", (Token.tk (Expr.Val 4)), Token.op "-", (Token.tk (Expr.Val 5))]
+	let ok = Tokenize (Normalize str)
+	let okk = Maximum (Precedence.map ok)
+	let chr = Data.Char.to_digit '2'
+	Eval str
+}
