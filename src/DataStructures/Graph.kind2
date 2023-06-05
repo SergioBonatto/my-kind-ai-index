@@ -21,18 +21,30 @@ Graph.updategraph (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new he
 	Graph.updategraph.godown 0 (Data.List.cons head tail) p = Data.List.cons head (Graph.updategraph tail p)   
 	Graph.updategraph.godown n (Data.List.cons (Data.Pair t (Data.List c)) ((Data.Pair.new head tail)) tail.tail) (Data.Pair.new fst snd) = Data.List.cons (Data.Pair.new head (Data.List.cons snd tail)) tail.tail   
 
-Graph.BFS (g: Graph) (init: Data.U60) : Data.List Data.U60
-Graph.BFS g init = Graph.BFS.visit g [init] []
+BFS (g: Graph) (init: Data.U60) : Data.List Data.U60
+BFS g init = BFS.visit g [init] []
 
-Graph.BFS.visit (g: Graph) (init: Data.List Data.U60) (visit: Data.List Data.U60)  : Data.List Data.U60
-Graph.BFS.visit g Data.List.nil visit  = Data.List.reverse visit
-Graph.BFS.visit g (Data.List.cons head tail) visit = 
-let neighbours = (Data.List.filter (Get.adjacent head g) (x => NotElem x (Data.List.cons head visit)))
+BFS.visit (g: Graph) (init: Data.List Data.U60) (visit: Data.List Data.U60)  : Data.List Data.U60
+BFS.visit g Data.List.nil visit  = Data.List.reverse visit
+BFS.visit g (Data.List.cons head tail) visit = 
+	BFS.visit.godown (Data.List.any visit (x => (Data.U60.to_bool (== x head)))) g (Data.List.cons head tail) visit
+// let newVisited = if (Data.List.any visit (x => (Data.U60.to_bool (== x head)))) {visit} else {(Data.List.cons head visit)} // ruim
+// let neighbours = (Data.List.filter (Get.adjacent head g) (x => NotElem x newVisited))
+// // let newVisited = Data.List.concat newVisited neighbours
+// let neighbours = (Data.List.concat tail neighbours)
+// // newVisited
+// // neighbours
+// ((BFS.visit g neighbours newVisited))
+BFS.visit.godown (cond: Data.Bool) (g: Graph) (init: Data.List Data.U60) (visit: Data.List Data.U60)  : Data.List Data.U60
+BFS.visit.godown Data.Bool.true g (Data.List.cons head tail) visit = BFS.visit g tail visit
+BFS.visit.godown Data.Bool.false g (Data.List.cons head tail) visit = 
+let newVisited = (Data.List.cons head visit) 
+let neighbours = (Data.List.filter (Get.adjacent head g) (x => NotElem x newVisited))
 let neighbours = (Data.List.concat tail neighbours)
 // newVisited
 // neighbours
-Graph.BFS.visit g neighbours (Data.List.cons head visit)
-
+(BFS.visit g neighbours newVisited)
+BFS.visit.godown b g u visit = Data.List.reverse visit
 
 NotElem (t: Data.U60) (l: Data.List Data.U60) : Data.Bool
 NotElem t Data.List.nil = Data.Bool.true
