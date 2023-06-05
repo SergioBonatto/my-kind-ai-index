@@ -1,0 +1,218 @@
+// --TODO: define appropriate data types for failure/success
+// --TODO: add support for more operations
+#derive[match]
+type Expr {
+  val (n: Data.U60)
+  add (a: Expr) (b: Expr)
+  mul (a: Expr) (b: Expr)
+  sub (a: Expr) (b: Expr) 
+}
+#derive[match]
+type Token {
+  token (e: Expr)
+  op    (s: Data.String)
+  error (s: Data.String)
+}
+
+Ops :  ( Data.List (Data.Pair Data.Char Data.U60)) 
+Ops = [(Data.Pair.new '+' 1), (Data.Pair.new '-' 1), (Data.Pair.new'*' 2)]
+
+Eval (s: Data.String) : Data.U60
+Eval (s) = Evalh (Unwrap (Transform (Tokenize (Normalize (s)))))
+
+Evalh (e : Expr): Data.U60
+Evalh (Expr.val val) = val
+Evalh (Expr.add expr1 expr2) = (+ (Evalh(expr1))  (Evalh(expr2)))
+Evalh (Expr.mul expr1 expr2) = (* (Evalh(expr1))  (Evalh(expr2)))
+Evalh (Expr.sub expr1 expr2) = (- (Evalh(expr1))  (Evalh(expr2)))
+
+#partial
+Unwrap (xs: Data.List Token) : Expr
+Unwrap (Data.List.cons (Token.token expr) Data.List.nil) = expr
+
+Transform (xs: Data.List Token) : Data.List Token
+Transform (xs) =
+  let  idx = HighestPrecedenceIdx (xs)
+  if (Data.U60.to_bool (== idx 0)){
+    xs
+  } else {
+    Transform (Data.List.concat
+      (Data.List.concat
+        ((Data.List.take xs (Data.U60.to_nat (- idx 1))))
+        [(BinaryTransform
+            (List.get_token xs (- idx 1))
+            (List.get_token xs idx)
+            (List.get_token xs (+ idx 1)))
+        ])
+      (Data.List.drop xs (Data.U60.to_nat (+ idx 2))))
+  }
+
+List.get_token (xs: Data.List Token) (n: Data.U60)  : Token
+List.get_token  Data.List.nil n                     = Token.error "Index out of bounds"
+List.get_token (Data.List.cons x xs) 0              = x
+List.get_token (Data.List.cons x xs) (n)            = List.get_token xs (- n 1)
+
+List.get <a> (xs: Data.List a) (n: Data.U60) (m: a) : a
+List.get a Data.List.nil n  m                       = m
+List.get a (Data.List.cons x xs) 0 m                = x
+List.get a (Data.List.cons x xs) (n) m              = List.get xs (- n 1) m
+
+#partial
+BinaryTransform (left: Token) (op: Token) (right: Token) : Token
+BinaryTransform (Token.token left) (Token.op "*") (Token.token right) = Token.token (Expr.mul left right)
+BinaryTransform (Token.token left) (Token.op "+") (Token.token right) = Token.token (Expr.add left right)
+BinaryTransform (Token.token left) (Token.op "-") (Token.token right) = Token.token (Expr.sub left right)
+
+HighestPrecedenceIdx (xs: Data.List Token)      : Data.U60
+HighestPrecedenceIdx Data.List.nil              = ' '
+HighestPrecedenceIdx (Data.List.cons xs.h xs.t) =
+  let xs    = Data.List.cons xs.h xs.t
+  let tks   = PrecedenceMap xs
+  let cond  = Data.U60.to_bool (== (Maximus tks) 0)
+  if cond {
+    0
+  } else {
+    let rng     = List.range (Data.Nat.to_u60 (Data.List.length xs.t))
+    let maximum = Maximus tks //Data.Nat.to_u60 (Data.List.length xs) 
+    let lamb    = (Data.List.filter rng ((k: Data.U60) => Data.U60.to_bool (== (Index.U60 tks k) maximum)))
+    (List.get lamb 0 0) 
+  }
+
+Maximus (xs: Data.List Data.U60) : Data.U60
+Maximus Data.List.nil = 0
+Maximus (Data.List.cons x xs) = 
+  let m = Maximus xs
+  if (Data.U60.to_bool (> x m)) {
+    x
+  } else {
+    m
+  }
+
+
+#partial
+Index.U60 <a> (xs: Data.List a) (n: Data.U60) : a
+// Index.U60 a Data.List.nil n                   =
+Index.U60 a (Data.List.cons x xs) 0           = x
+Index.U60 a (Data.List.cons x xs) n           = Index.U60 xs (- n 1)
+
+
+List.range (n: Data.U60) : Data.List Data.U60
+List.range n = (Data.List.reverse (List.range.aux n))
+
+List.range.aux (n: Data.U60) : Data.List Data.U60
+List.range.aux 0 = Data.List.nil
+List.range.aux (n) = 
+  let m = Data.List.length (List.range (- n 1))
+  (Data.List.cons (Data.Nat.to_u60 m) (List.range.aux (- n 1)))
+
+PrecedenceMap (xs: Data.List Token) : Data.List Data.U60
+PrecedenceMap Data.List.nil = Data.List.nil
+PrecedenceMap (Data.List.cons xs.h xs.t) =
+  Data.List.map (Data.List.cons xs.h xs.t) ((t: Token) => (
+    match Token t {
+      op  s => Get_precedence (Data.Maybe.extract (Data.String.head (s)) 0 (x => x))
+      token => 0
+      error => 0 
+    }
+    ))
+
+Get_precedence (x: Data.Char) : Data.U60
+Get_precedence x = 
+  (Data.Maybe.extract (
+    Data.List.head (
+    Data.List.filter Ops ((y: Data.Pair Data.Char Data.U60) => Data.Char.equal x (Data.Pair.fst y))))
+    0 (x => Data.Pair.snd x)) 
+ 
+// tokenize :: String -> [Token]
+// tokenize str
+//   | length str == matchL = [Token (Val (read str))]
+//   | otherwise =
+//     (Token (Val (read val))) :
+//     (Op [str !! matchL]) : (tokenize (drop (matchL + 1) str))
+//   where
+//     val = takeWhile (\c -> null (filter (\(op, prec) -> c == op) ops)) str
+    // val = takeWhile (\c => notElem c (map (\(op, _) => op) ops)) str
+//     matchL = length val
+Tokenize (s: Data.String) : Data.List Token
+Tokenize Data.String.nil = Data.List.nil
+Tokenize (Data.String.cons s.h s.t) =
+  let str   = Data.String.cons s.h s.t
+  let xs    = Data.String.to_list str
+  let val   = Data.List.take_while (c => Data.List.is_nil (Data.List.filter Ops (y => Data.U60.to_bool ( == c (Data.Pair.fst y))))) xs
+  let chr   = Char.to_digit (Data.String.to_char str)
+  let len   = Data.List.length val
+  let len2  = Data.Nat.to_u60 (Data.List.length val)
+  let cond  = Data.Nat.equal (Data.String.length str) len
+   if cond {
+    [(Token.token (Expr.val chr))]
+   } else {                                                             //  |/ char.to_string
+    Data.List.cons (Token.token (Expr.val chr)) (Data.List.cons (Token.op (Data.Char.to_string (List.get xs len2 ' '))) (Tokenize (Data.String.drop (len) s.t)))
+// ?
+   }
+  
+// Token (Val (parseInteger val)) ::
+                // Op [str !! matchL] ::
+                // tokenize (drop (matchL + 1) str)
+
+Char.is_digit (x: Data.Char): Data.Bool
+Char.is_digit x = Data.U60.to_bool(& (>= x 48) (<= x 57))
+
+Char.to_digit (x: Data.Char): Data.U60
+Char.to_digit x = if (Char.is_digit x) {(- x 48)} else {x}
+
+ // Token (Val (parseInteger val)) ::
+                // Op [str !! matchL] ::
+                // tokenize (drop (matchL + 1) str)
+  // ?
+  // parseInteger : String -> Integer
+    // parseInteger s = case (readMaybe s :: Maybe Integer) of
+                       // Just n => n
+                       // Nothing => 0
+// Parse_u60 (s: Data.String) : Data.U60
+// Parse_u60 s = Data.Maybe.extract (String.to_u60 s) 0 (x => x)
+
+
+
+Normalize (s: Data.String) : Data.String
+Normalize Data.String.nil = Data.String.nil
+Normalize (Data.String.cons s str) = 
+  let cond = Data.Char.equal s ' '
+  if cond {
+    Normalize (str)
+  } else {
+    Data.String.cons s (Normalize (str))
+  }
+
+Main {
+  (Eval "1+2*5+3")
+}
+//
+//
+// U60.show (n: Data.U60) : Data.String
+// U60.show n = Data.String.reverse (U60.show.go n)
+//
+// U60.show.go (n: Data.U60) : Data.String
+// U60.show.go 0 = Data.String.cons '0' Data.String.nil
+// U60.show.go 1 = Data.String.cons '1' Data.String.nil
+// U60.show.go 2 = Data.String.cons '2' Data.String.nil
+// U60.show.go 3 = Data.String.cons '3' Data.String.nil
+// U60.show.go 4 = Data.String.cons '4' Data.String.nil
+// U60.show.go 5 = Data.String.cons '5' Data.String.nil
+// U60.show.go 6 = Data.String.cons '6' Data.String.nil
+// U60.show.go 7 = Data.String.cons '7' Data.String.nil
+// U60.show.go 8 = Data.String.cons '8' Data.String.nil
+// U60.show.go 9 = Data.String.cons '9' Data.String.nil
+// U60.show.go n =
+//   if (Data.U60.to_bool(< n 10)) {(U60.show.go n)}
+//     else {Data.String.cons (+ 48 (% n 10)) (U60.show.go (/ n 10)) }
+//
+// List.show (xs: Data.List Data.U60) : Data.String
+// List.show xs = Data.String.concat "[" (Data.String.concat (List.show.aux xs) "]")
+//
+// List.show.aux (xs: Data.List Data.U60) : Data.String
+// List.show.aux Data.List.nil = ""
+// List.show.aux (Data.List.cons xs.h Data.List.nil) = (U60.show xs.h)
+// List.show.aux (Data.List.cons xs.h xs.t) =
+// (Data.String.concat (Data.String.concat (U60.show xs.h) "," ) (List.show.aux  xs.t) )
+//
+//
