@@ -25,6 +25,110 @@ Size (Term.true) = 1n
 Size (Term.false) = 1n
 Size (Term.if cond then else) = (Data.Nat.succ (Data.Nat.add (Size cond) (Data.Nat.add (Size then) (Size else)))) 
 
+// 3.3.3 Lemma: The number of distinct constants in a term t is no greater than the
+// size of t (i.e., |Consts(t)| ≤ size(t)). 
+
+type Lte (n: Data.Nat) ~ (m: Data.Nat) {
+	n : Lte n n
+	s <m: Data.Nat> (pred: (Lte n m)) : (Lte n (Data.Nat.succ m)) 
+}
+
+Const_num (t: Term) : Data.Nat
+Const_num (Term.z) = 1n
+Const_num (Term.s pred) = Const_num pred
+Const_num (Term.p succ) = Const_num succ
+Const_num (Term.isz zt) = Const_num zt
+Const_num (Term.true) = 1n
+Const_num (Term.false) = 1n
+Const_num (Term.if cond then else) = (Data.Nat.add (Const_num cond) (Data.Nat.add (Const_num then) (Const_num else)))
+
+App_length <x> (l1: Data.List x) (l2: Data.List x) : (Prop.Equal Data.Nat (Data.List.length (Data.List.concat l1 l2)) (Data.Nat.add (Data.List.length l1) (Data.List.length l2)))
+
+// Length_const
+Length_const (t: Term) : Prop.Equal (Data.List.length (Const t)) (Const_num t)
+Length_const (Term.z) = Prop.Equal.refl
+Length_const (Term.true) = Prop.Equal.refl
+Length_const (Term.false) = Prop.Equal.refl
+Length_const (Term.s pred) = Length_const pred 
+Length_const (Term.p succ) = Length_const succ 
+Length_const (Term.isz zt) = Length_const zt
+Length_const (Term.if cond then else) = 	
+	let ind1 = Length_const cond 
+	let ind2 = Length_const then 
+	let ind3 = Length_const else
+	let aux = App_length (Const cond) (Data.List.concat (Const then) (Const else))
+	let auy = App_length (Const then) (Const else)
+	let rrt = Prop.Equal.rewrite auy (x => ((Prop.Equal _ (Data.Nat.add (Data.List.length _ (Const cond)) (x))))) aux
+	let rru = Prop.Equal.rewrite ind1 (x => ((Prop.Equal _ (Data.Nat.add x _)))) rrt
+	let rrv = Prop.Equal.rewrite ind2 (x => ((Prop.Equal _ (Data.Nat.add _ (Data.Nat.add (x) _))))) rru
+	let rrw = Prop.Equal.rewrite ind3 (x => ((Prop.Equal _ (Data.Nat.add _ (Data.Nat.add _ (x)))))) rrv
+	rrw
+
+Lemma (t: Term) : Type
+Lemma t =  (Lte (Const_num t) (Size t))
+
+Lemma333 (t: Term) : Lemma t
+Lemma333 (Term.z) = Lte.n
+Lemma333 (Term.true) = Lte.n
+Lemma333 (Term.false) = Lte.n
+Lemma333 (Term.s pred) = 
+	let ind = Lemma333 pred 
+  let aux = Lte.s ind 
+	aux
+Lemma333 (Term.p succ) = 
+	let ind = Lemma333 succ 
+  let aux = Lte.s ind 
+	aux
+Lemma333 (Term.isz zt) = 
+	let ind = Lemma333 zt
+  let aux = Lte.s ind 
+	aux
+Lemma333 (Term.if cond then else) = 
+	let ind1 = Lemma333 cond
+	let ind2 = Lemma333 then
+	let ind3 = Lemma333 else
+	let auxa = Lte_ben (Data.Nat.add (Const_num cond) (Data.Nat.add (Const_num then) (Const_num else)))
+	let rrt = Lte.rewrite ind1 (x => (Lte _ (Data.Nat.add x _))) auxa
+	let rru = Lte.rewrite ind2 (x => (Lte _ (Data.Nat.add _ (Data.Nat.add x _)))) rrt
+	let rrv = Lte.rewrite ind3 (x => (Lte _ (Data.Nat.add _ (Data.Nat.add _ x)))) rru
+	Lte.s rrv
+
+Lte.rewrite <a: Data.Nat> <b: Data.Nat> (e: Lte a b) -(p: Data.Nat -> Type) (x: p a) : p b
+Lte.rewrite a b (Lte.n k) p x = x :: p k
+// Lte.rewrite a b (Lte.s c d k) p x = 
+// 	let e0 = Prop.Equal.refl :: Prop.Equal b (Data.Nat.succ d)
+// 	let ind = Lte.rewrite k p x 
+// 	?
+
+// O_le_n (n: Data.Nat) : Lte Data.Nat.zero n
+// O_le_n Data.Nat.zero = Lte.n 
+// O_le_n (Data.Nat.succ n) = (Lte.s (O_le_n n))
+
+// Le_one_succ_n (n: Data.Nat) : Lte 1n (Data.Nat.succ n)
+// Le_one_succ_n Data.Nat.zero = Lte.n
+// Le_one_succ_n (Data.Nat.succ n) = Lte.s (Le_one_succ_n n)
+
+// N_le_m_sn_le_sm (n: Data.Nat) (m: Data.Nat) (l: Lte n m) : Lte (Data.Nat.succ n) (Data.Nat.succ m)
+// N_le_m_sn_le_sm Data.Nat.zero Data.Nat.zero (Lte.n) = Lte.n
+// N_le_m_sn_le_sm (Data.Nat.succ n.pred) Data.Nat.zero (Lte.n) = Data.Empty.absurd _
+// N_le_m_sn_le_sm Data.Nat.zero (Data.Nat.succ m.pred) l = Lte.s (Le_one_succ_n m.pred)
+// N_le_m_sn_le_sm (Data.Nat.succ n.pred) (Data.Nat.succ m.pred) (Lte.s p) = Lte.s (N_le_m_sn_le_sm (Data.Nat.succ n.pred) m.pred p)
+
+Lte_ben (n: Data.Nat) : (Lte n n)
+Lte_ben n = Lte.n
+
+// Lte_size (n: Data.Nat) (m: Data.Nat) (e: Prop.Equal n m) : (Lte n m)
+// Lte_size Data.Nat.zero Data.Nat.zero e = Lte.n
+// Lte_size (Data.Nat.succ n) Data.Nat.zero e = Data.Empty.absurd _
+// Lte_size Data.Nat.zero (Data.Nat.succ m) e = Lte.s (O_le_n m)
+// Lte_size (Data.Nat.succ n) (Data.Nat.succ m) e = 
+// 	let prd = Prop.Equal.apply (x => Data.Nat.pred x) e
+// 	let ind = Lte_size n m prd
+// 	let aux = N_le_m_sn_le_sm n m ind
+// 	aux
+
+// Lte_S (n: Data.Nat) (m: Data.Nat) (l: Lte n m) : (Lte n (Data.Nat.succ m))
+// Lte_S n m l = Lte.s l
 
 // That is, the size of t is the number of nodes in its abstract syntax tree. Simi-
 // larly, the depth of a term t, written depth(t), is defined as follows:
