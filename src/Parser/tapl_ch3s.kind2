@@ -164,3 +164,51 @@ Evaluation (Term.isz (Term.s ztpred)) = Term.false // E-IszeroSucc
 Evaluation (Term.isz zt) = Term.isz (Evaluation zt) // E-IsZero)
 Evaluation t =  t // z, true, false
 
+// 3.5.4 Theorem [Determinacy of one-step evaluation]: If t -→ t′ and t -→ t′′, then t′ = t′′
+//One-step evaluation relation
+#derive[match]
+type Step ~(then: Term) (else: Term) {
+	E_IfTrue <then: Term> <else: Term> : Step (Term.if Term.true then else) then
+	E_IfFalse <then: Term> <else: Term> : Step (Term.if Term.false then else) else
+	E_If <cond1: Term> <cond2: Term> <then: Term> <else: Term> (s: Step cond1 cond2) : Step (Term.if cond1 then else) (Term.if cond2 then else)
+}
+//theorem: Determinacy of one-step evaluation
+Theorem_doose (t1: Term) (t2: Term) (t3: Term) (s1: Step t1 t2) (s2: Step t1 t3) : Prop.Equal t2 t3
+Theorem_doose t1 t2 t3 (Step.E_IfTrue t4 t5) (Step.E_IfTrue t6 t7) = 
+	let e0 = Prop.Equal.refl :: Prop.Equal t4 t2
+	let e1 = Prop.Equal.refl :: Prop.Equal t6 t3
+	let e2 = Prop.Equal.refl :: Prop.Equal t1 (Term.if Term.true t6 t7)
+	let e3 = Prop.Equal.refl :: Prop.Equal t1 (Term.if Term.true t4 t5)
+	let chn = Prop.Equal.chain (Prop.Equal.mirror e2) e3
+	let app = Prop.Equal.apply (x => Evaluation x) chn
+	let rrt = Prop.Equal.rewrite e0 (x => (Prop.Equal Term t6 x)) app
+	let rru = Prop.Equal.rewrite e1 (x => (Prop.Equal Term x t2)) rrt
+	let mir = (Prop.Equal.mirror rru)
+	mir
+Theorem_doose t1 t2 t3 (Step.E_IfFalse t4 t5) (Step.E_IfFalse t6 t7) = 
+	let e0 = Prop.Equal.refl :: Prop.Equal t5 t2
+	let e1 = Prop.Equal.refl :: Prop.Equal t7 t3
+	let e2 = Prop.Equal.refl :: Prop.Equal t1 (Term.if Term.false t6 t7)
+	let e3 = Prop.Equal.refl :: Prop.Equal t1 (Term.if Term.false t4 t5)
+	let chn = Prop.Equal.chain (Prop.Equal.mirror e2) e3
+	let app = Prop.Equal.apply (x => Evaluation x) chn
+	let rrt = Prop.Equal.rewrite e0 (x => (Prop.Equal Term t7 x)) app
+	let rru = Prop.Equal.rewrite e1 (x => (Prop.Equal Term x t2)) rrt
+	let mir = (Prop.Equal.mirror rru)
+	mir
+Theorem_doose (Term.if t1 t21 t31) t2 t3 (Step.E_If t12 t2_ t4_ t6_ step1) (Step.E_If t13 t3_ t5_ t7_ step2) =
+	let e0 = Prop.Equal.refl :: Prop.Equal Term t2 (Term.if t2_ t4_ t6_) 
+	let e1 = Prop.Equal.refl :: Prop.Equal Term t3 (Term.if t3_ t5_ t7_)  
+	let e3 = Prop.Equal.refl :: Prop.Equal Term t4_ t21 
+	let e4 = Prop.Equal.refl :: Prop.Equal Term t6_ t31 
+	let e6 = Prop.Equal.refl :: Prop.Equal Term t5_ t21 
+	let e7 = Prop.Equal.refl :: Prop.Equal Term t7_ t31  
+	let ch1 = Prop.Equal.chain e6 (Prop.Equal.mirror e3) 
+	let ch2 = Prop.Equal.chain e7 (Prop.Equal.mirror e4)
+	let mir = (Prop.Equal.mirror e1) 
+	let rrt = Prop.Equal.rewrite ch1 (x => (Prop.Equal (Term.if t3_ x t7_) t3)) mir
+	let rru = Prop.Equal.rewrite ch2 (x => (Prop.Equal (Term.if t3_ t4_ x) t3)) rrt
+	let ind = Theorem_doose t12 t2_ t3_ step1 step2
+	let rrv = Prop.Equal.rewrite (Prop.Equal.mirror ind) (x => (Prop.Equal (Term.if x t4_ t6_) t3)) rru
+	let ch2 = Prop.Equal.chain e0 rrv
+	ch2
