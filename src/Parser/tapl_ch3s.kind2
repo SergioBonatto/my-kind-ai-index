@@ -1,0 +1,62 @@
+Const (t: Term) : Data.List Term
+Const (Term.z) = [Term.z]
+Const (Term.s pred) = Const pred
+Const (Term.p succ) = Const succ
+Const (Term.isz zt) = Const zt
+Const (Term.true) = [Term.true]
+Const (Term.false) = [Term.false]
+Const (Term.if cond then else) = (Data.List.concat (Const cond) (Data.List.concat (Const then) (Const else)))
+
+// Definition: The size of a term t, written size(t), is defined as follows:
+// size(true) = 1
+// size(false) = 1
+// size(0) = 1
+// size(succ t1) = size(t1) + 1
+// size(pred t1) = size(t1) + 1
+// size(iszero t1) = size(t1) + 1
+// size(if t1 then t2 else t3) = size(t1) + size(t2) + size(t3) + 1
+
+Size (t: Term) : Data.Nat
+Size (Term.z) = 1n
+Size (Term.s pred) = (Data.Nat.succ (Size pred))
+Size (Term.p succ) = (Data.Nat.succ (Size succ))
+Size (Term.isz zt) = (Data.Nat.succ (Size zt))
+Size (Term.true) = 1n
+Size (Term.false) = 1n
+Size (Term.if cond then else) = (Data.Nat.succ (Data.Nat.add (Size cond) (Data.Nat.add (Size then) (Size else)))) 
+
+
+// That is, the size of t is the number of nodes in its abstract syntax tree. Simi-
+// larly, the depth of a term t, written depth(t), is defined as follows:
+// depth(true) = 1
+// depth(false) = 1
+// depth(0) = 1
+// depth(succ t1) = depth(t1) + 1
+// depth(pred t1) = depth(t1) + 1
+// depth(iszero t1) = depth(t1) + 1
+// depth(if t1 then t2 else t3) = max(depth(t1), depth(t2), depth(t3)) + 1
+// Equivalently, depth(t) is the smallest i such that t ∈ Si according to Definition 3.2.3.
+
+Depth (t: Term) : Data.Nat
+Depth (Term.z) = 1n
+Depth (Term.s pred) = (Data.Nat.succ (Depth pred))
+Depth (Term.p succ) = (Data.Nat.succ (Depth succ))
+Depth (Term.isz zt) = (Data.Nat.succ (Depth zt))
+Depth (Term.true) = 1n
+Depth (Term.false) = 1n
+Depth (Term.if cond then else) = (Data.Nat.succ (Data.Nat.max (Depth cond) (Data.Nat.max (Depth then) (Depth else))))
+
+
+Evaluation (t: Term) : Term
+Evaluation (Term.if Term.true then else) = then // E-iftrue
+Evaluation (Term.if Term.false then else) = else // E-ifflase
+Evaluation (Term.if cond then else) = Term.if (Evaluation cond) then else // E-if
+Evaluation (Term.s pred) = Term.s (Evaluation pred) // E-Succ
+Evaluation (Term.p z) = z // (E-PredZero)
+Evaluation (Term.p (Term.s succpred)) = succpred // E-PredSucc
+Evaluation (Term.p succ) = Term.p (Evaluation succ) // E-Pred
+Evaluation (Term.isz z) = Term.true // (E-IszeroZero)
+Evaluation (Term.isz (Term.s ztpred)) = Term.false // E-IszeroSucc
+Evaluation (Term.isz zt) = Term.isz (Evaluation zt) // E-IsZero)
+Evaluation t =  t // z, true, false
+
