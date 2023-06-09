@@ -109,17 +109,38 @@ Precedence.Get c =
 	let snd = Data.Pair.snd head
 	snd
 
+Data.List.to_u60 (xs: Data.List Data.U60) : Data.U60 {
+	Data.List.to_u60.go (Data.List.filter xs (x => Data.Char.is_digit x))
+}
+
+Data.U60.pow (x: Data.U60) (y: Data.U60) : Data.U60
+Data.U60.pow x 0 = 1
+Data.U60.pow x y = (* x (Data.U60.pow x (- y 1)))
+
+Data.List.to_u60.go (xs: Data.List Data.U60) : Data.U60
+Data.List.to_u60.go Data.List.nil = 0
+Data.List.to_u60.go (Data.List.cons head tail) = 
+	let head = Data.Char.to_digit head
+	let len = Data.Nat.to_u60 (Data.List.length tail)
+	let add = (* head (Data.U60.pow 10 len)) 
+	(+ add (Data.List.to_u60.go tail))
+
 Tokenize (s: Data.String) : Data.List Token
 Tokenize str = 
 	let lst = Data.String.to_list str 	
 	let val = Data.List.take_while (c => Data.List.is_nil (Data.List.filter Ops (x => (Data.U60.to_bool (== c (Data.Pair.fst x)))))) lst
-	let u60 = Data.Char.to_digit (Data.String.to_char str)
+	let map = Data.List.map val (x => Data.Char.to_digit x)
+
+	// Apps.HVM.log (List.show val) (
+	// let u60 = Data.Char.to_digit (Data.String.to_char str)
+	let u60 = Data.List.to_u60 val
 	let len = (Data.List.length val) 
 	let boo = (Data.Nat.equal (Data.String.length str) len)
 	match Data.Bool boo {
 		true => [(Token.tk (Expr.Val u60))]
 		false => Data.List.cons (Token.tk (Expr.Val u60)) (Data.List.cons (Token.op (Data.Char.to_string  (Index.U60.s str (Data.Nat.to_u60 len)))) (Tokenize (Data.String.drop (Data.Nat.succ len) str)))
 	}
+// )
 
 Normalize (s: Data.String) : Data.String
 Normalize Data.String.nil = ""
@@ -137,10 +158,12 @@ Data.Char.to_digit (x: Data.Char): Data.U60
 Data.Char.to_digit x = if (Data.Char.is_digit x) {(- x 48)} else {x}
 
 Main {
-	let str = "2 + 3 * 4 - 5" // 9
+	let str = "1100 + 3 * 5" // 9
 	let tkn = [(Token.tk (Expr.Val 2)), Token.op "+", (Token.tk (Expr.Val 3)), Token.op "*", (Token.tk (Expr.Val 4)), Token.op "-", (Token.tk (Expr.Val 5))]
 	let ok = Tokenize (Normalize str)
 	let okk = Maximum (Precedence.map ok)
 	let chr = Data.Char.to_digit '2'
 	Eval str
+	// Data.String.to_u60 "1234+5"
+	// ok
 }
